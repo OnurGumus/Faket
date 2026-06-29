@@ -1,0 +1,8 @@
+version: 2
+updates:
+  # Keep GitHub Actions versions current. (NuGet deps are managed by paket, which
+  # Dependabot does not support, so there is no nuget updater here.)
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

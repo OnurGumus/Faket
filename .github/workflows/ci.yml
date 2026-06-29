@@ -7,9 +7,18 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+# Use bash on every OS so the test --filter (contains '&') quotes consistently.
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -28,11 +37,35 @@ jobs:
       - name: Build
         run: dotnet build Paket.sln -c Release
 
-      # The two excluded tests are pre-existing/environmental, not Faket regressions:
+      # Excluded tests are pre-existing/environmental, not Faket regressions:
       #   - TestCategory=Flaky: upstream-flagged unstable on .NET Core runtimes
-      #   - PackagingProcess: asserts assembly version == RELEASE_NOTES, which needs the
-      #     legacy FAKE build's version injection (absent under plain `dotnet test`)
+      #   - PackagingProcess: asserts assembly version == RELEASE_NOTES (needs the FAKE build)
       - name: Unit tests
         run: >-
           dotnet test tests/Paket.Tests/Paket.Tests.fsproj -c Release --no-build
           --filter "TestCategory!=Flaky & FullyQualifiedName!~PackagingProcess"
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET (from global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+
+      - name: Faket restore
+        run: dotnet faket restore
+
+      - name: Build
+        run: dotnet build Paket.sln -c Release
+
+      # A quick, deterministic integration smoke (load-script generation).
+      - name: Integration tests (scriptgen)
+        run: >-
+          dotnet test integrationtests/Paket.IntegrationTests/Paket.IntegrationTests.fsproj
+          -c Release --no-build --filter "TestCategory=scriptgen"
