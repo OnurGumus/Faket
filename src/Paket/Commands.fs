@@ -470,6 +470,14 @@ with
             match this with
             | Apply -> "perform the migration (omit for a dry run that only reports what would change)"
 
+type NixArgs =
+    | [<Unique;CustomCommandLine("--output");AltCommandLine("-o")>] Output of path:string
+with
+    interface IArgParserTemplate with
+        member this.Usage =
+            match this with
+            | Output _ -> "output path for the generated deps.nix (default: deps.nix next to paket.lock)"
+
 type ShowConditionsArgs =
     | [<Hidden;NoCommandLine>] NoArgs
 with
@@ -714,6 +722,7 @@ type Command =
     | [<CustomCommandLine("restore")>]                  Restore of ParseResults<RestoreArgs>
     | [<CustomCommandLine("hash")>]                     Hash of ParseResults<HashArgs>
     | [<CustomCommandLine("migrate")>]                  Migrate of ParseResults<MigrateArgs>
+    | [<CustomCommandLine("nix")>]                      Nix of ParseResults<NixArgs>
     | [<CustomCommandLine("simplify")>]                 Simplify of ParseResults<SimplifyArgs>
     | [<CustomCommandLine("update")>]                   Update of ParseResults<UpdateArgs>
     | [<CustomCommandLine("find-packages")>]            FindPackages of ParseResults<FindPackagesArgs>
@@ -750,6 +759,7 @@ with
             | Restore _ -> "download the computed dependency graph"
             | Hash _ -> "write per-package content hashes (sha512) into paket.lock for reproducible (e.g. Nix) pinning"
             | Migrate _ -> "migrate an existing Paket setup to Faket (dry run unless --apply)"
+            | Nix _ -> "generate a nixpkgs deps.nix from paket.lock for reproducible Nix builds"
             | Simplify _ -> "simplify declared dependencies by removing transitive dependencies"
             | Update _ -> "update dependencies to their latest version"
             | FindPackages _ -> "search for NuGet packages"

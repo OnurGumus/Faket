@@ -758,6 +758,10 @@ let migrate (results : ParseResults<MigrateArgs>) =
         | None -> Directory.GetCurrentDirectory()
     Paket.MigrateProcess.run root apply |> ignore
 
+let nix (results : ParseResults<NixArgs>) =
+    let dependencies = Dependencies.Locate()
+    Paket.NixProcess.Run dependencies.DependenciesFile (results.TryGetResult NixArgs.Output)
+
 let showConditions (results : ParseResults<ShowConditionsArgs>) =
     let dependenciesFile = Dependencies.Locate()
     for condition in dependenciesFile.GetConditions() do
@@ -913,6 +917,7 @@ let handleCommand silent command =
     | Restore r -> processCommand silent restore r
     | Hash r -> processCommand silent hash r
     | Migrate r -> processCommand silent migrate r
+    | Nix r -> processCommand silent nix r
     | Simplify r -> processCommand silent simplify r
     | Update r -> processCommand silent update r
     | FindPackages r -> processCommand silent (findPackages silent) r

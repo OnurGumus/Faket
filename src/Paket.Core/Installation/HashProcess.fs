@@ -19,7 +19,7 @@ type HashMismatch =
 /// Downloads (or reuses the cache for) a resolved NuGet package and returns the base64
 /// SHA512 of its .nupkg. Returns None for path-based (local) sources, which have nothing
 /// stable to pin.
-let private actualHash root groupName (pkg:ResolvedPackage) : string option =
+let tryComputeHash root groupName (pkg:ResolvedPackage) : string option =
     match pkg.Source with
     | LocalNuGet _ -> None
     | _ ->
@@ -37,7 +37,7 @@ let addContentHashes (lockFile:LockFile) : LockFile =
 
     let hashPackage groupName (pkg:ResolvedPackage) =
         try
-            match actualHash root groupName pkg with
+            match tryComputeHash root groupName pkg with
             | Some h -> { pkg with ContentHash = Some h }
             | None -> pkg
         with exn ->
@@ -64,7 +64,7 @@ let verifyContentHashes (lockFile:LockFile) : HashMismatch list * int =
                 match pkg.ContentHash with
                 | None -> skipped <- skipped + 1
                 | Some expected ->
-                    match (try actualHash root groupName pkg with exn -> Some ("<error: " + exn.Message + ">")) with
+                    match (try tryComputeHash root groupName pkg with exn -> Some ("<error: " + exn.Message + ">")) with
                     | Some actual when actual <> expected ->
                         yield { Group = groupName; Package = pkg.Name; Version = pkg.Version
                                 Expected = expected; Actual = actual }

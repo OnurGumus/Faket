@@ -13,6 +13,11 @@ Faket tracks upstream Paket but modernizes the codebase and adds a few capabilit
 - **Reproducible (Nix-friendly) lock files.** `faket hash` writes per-package content hashes
   (`sha512: …`) into `paket.lock`. The hashes match NuGet's authoritative `.nupkg.sha512`, so tools
   like Nix can pin packages reproducibly.
+- **Tamper-evident restore.** `faket restore --verify-hashes` re-hashes each downloaded `.nupkg`
+  and fails if it doesn't match the hash recorded in `paket.lock`.
+- **Nix export.** `faket nix` generates a `deps.nix` (`fetchNuGet` entries with SRI `sha512-…`)
+  for nixpkgs `buildDotnetModule`.
+- **Migration.** `faket migrate` converts an existing Paket setup to Faket (dry run unless `--apply`).
 - The CLI command is **`faket`** (the package id is `Faket`).
 
 Internals keep the `Paket.*` namespaces so upstream fixes remain easy to merge. Everything below is

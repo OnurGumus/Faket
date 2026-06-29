@@ -88,6 +88,7 @@
     <Compile Include="Installation\RestoreProcess.fs" />
     <Compile Include="Installation\HashProcess.fs" />
     <Compile Include="Installation\MigrateProcess.fs" />
+    <Compile Include="Installation\NixProcess.fs" />
     <Compile Include="Installation\InstallProcess.fs" />
     <Compile Include="Installation\UpdateProcess.fs" />
     <Compile Include="PackageAnalysis\Queries.fs" />
