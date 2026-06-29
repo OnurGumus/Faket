@@ -71,8 +71,8 @@ let internal memoizeAsyncEx (f: 'iext -> 'i -> Async<'o * 'oext>) =
     let handle (ex:'iext) (x:'i) : MemoizeAsyncExResult<'oext, 'o> =
         let mutable tcs_result = null
         let task_cached = cache.GetOrAdd(x, fun x ->
-            tcs_result <- TaskCompletionSource()
-            let tcs = TaskCompletionSource()
+            tcs_result <- TaskCompletionSource<'o * 'oext>()
+            let tcs = TaskCompletionSource<'o>()
 
             Async.Start (async {
                 try
@@ -228,7 +228,9 @@ let createRelativePath root (path:string) =
         else Path.GetFullPath root
 
     let uri = Uri basePath
-    let relative = uri.MakeRelativeUri(Uri path).ToString().Replace("/", "\\").Replace("%20", " ")
+    // .NET 10's Uri.MakeRelativeUri percent-encodes characters such as '\' (%5C) and ' ' (%20);
+    // unescape before normalising separators so embedded paths round-trip unchanged.
+    let relative = Uri.UnescapeDataString(uri.MakeRelativeUri(Uri path).ToString()).Replace("/", "\\")
     relative
 
 /// The path of the "Program Files" folder - might be x64 on x64 machine
@@ -619,7 +621,7 @@ module String =
     let inline trim (text:string) = text.Trim()
     let inline trimChars (chs: char[]) (text:string) = text.Trim chs
     let inline trimStart (pre: char[]) (text:string) = text.TrimStart pre
-    let inline split sep (text:string) = text.Split sep
+    let inline split (sep: char[]) (text:string) = text.Split sep
 
 // MonadPlus - "or else"
 let inline (++) x y =
@@ -879,7 +881,7 @@ module ObservableExtensions =
 
 type StringBuilder with
 
-    member self.AddLine text =
+    member self.AddLine (text: string) =
         self.AppendLine text |> ignore
 
     member self.AppendLinef text = Printf.kprintf self.AppendLine text

@@ -267,10 +267,10 @@ module SemVer =
                 /// matches over list of the version fragments *and* delimiters
                 let major, minor, patch, revision, suffix =
                     match fragments with
-                    | Int M::"."::Int m::"."::Int p::"."::Big b::tail -> M, m, p, b, tail
-                    | Int M::"."::Int m::"."::Int p::tail -> M, m, p, 0I, tail
-                    | Int M::"."::Int m::tail -> M, m, 0, 0I, tail
-                    | Int M::tail -> M, 0, 0, 0I, tail
+                    | Int maj::"."::Int m::"."::Int p::"."::Big b::tail -> maj, m, p, b, tail
+                    | Int maj::"."::Int m::"."::Int p::tail -> maj, m, p, 0I, tail
+                    | Int maj::"."::Int m::tail -> maj, m, 0, 0I, tail
+                    | Int maj::tail -> maj, 0, 0, 0I, tail
                     | _ -> raise(ArgumentException("SemVer.Parse", "version"))
                     //this is expected to fail, for now :/
                     //| [text] -> 0, 0, 0, 0I, [text] 
