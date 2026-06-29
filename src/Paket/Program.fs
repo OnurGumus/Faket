@@ -756,7 +756,9 @@ let migrate (results : ParseResults<MigrateArgs>) =
         match Dependencies.TryLocate() with
         | Some d -> d.RootPath
         | None -> Directory.GetCurrentDirectory()
-    Paket.MigrateProcess.run root apply |> ignore
+    // pin the migrated tool manifest to this faket's version (drop +build metadata)
+    let faketVersion = paketVersion.Split('+').[0]
+    Paket.MigrateProcess.run root faketVersion apply |> ignore
 
 let nix (results : ParseResults<NixArgs>) =
     let dependencies = Dependencies.Locate()

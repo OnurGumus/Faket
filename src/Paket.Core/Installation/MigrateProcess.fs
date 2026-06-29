@@ -54,16 +54,15 @@ let plan (root:string) : MigrationAction list =
           if File.Exists magicConfig then
               yield ManualReview (sprintf "%s present - custom bootstrapper configuration must be migrated by hand" magicConfig) ]
 
-let private rewriteToolManifest (path:string) =
+let private rewriteToolManifest (faketVersion:string) (path:string) =
     let node = JsonNode.Parse(File.ReadAllText path)
     let tools = node.["tools"].AsObject()
     match tools.["paket"] with
     | null -> false
     | paketNode ->
         let faket = JsonObject()
-        match paketNode.["version"] with
-        | null -> ()
-        | v -> faket.["version"] <- JsonValue.Create(v.GetValue<string>())
+        // Pin to the running faket's version, not the old paket version.
+        faket.["version"] <- JsonValue.Create(faketVersion)
         let cmds = JsonArray()
         cmds.Add(JsonValue.Create("faket"))
         faket.["commands"] <- cmds
@@ -76,8 +75,16 @@ let private rewriteToolManifest (path:string) =
         File.WriteAllText(path, node.ToJsonString(opts))
         true
 
-/// Runs the plan. When apply=false, only reports. Returns the actions that were (or would be) taken.
-let run (root:string) (apply:bool) : MigrationAction list =
+/// Invalidates the restore cache so the next build/restore regenerates the per-project
+/// obj props against the refreshed (faket) targets. Without this, projects relying on
+/// paket-delivered type providers/generators can fail to build until a forced restore.
+let private invalidateRestoreCache (root:string) =
+    let hashFile = Path.Combine(root, Constants.PaketRestoreHashFilePath)
+    if File.Exists hashFile then try File.Delete hashFile with _ -> ()
+
+/// Runs the plan. When apply=false, only reports. `faketVersion` is the version the tool
+/// manifest will be pinned to (the running faket's version). Returns the actions taken.
+let run (root:string) (faketVersion:string) (apply:bool) : MigrationAction list =
     let actions = plan root
     if List.isEmpty actions then
         tracefn "No Paket setup found at %s (looked for paket.dependencies)." root
@@ -89,18 +96,21 @@ let run (root:string) (apply:bool) : MigrationAction list =
             match a with
             | UpdateToolManifest p ->
                 if apply then
-                    if rewriteToolManifest p then tracefn "  updated tool manifest %s (paket -> faket)" p
-                    traceWarnfn "  set the Faket version in %s and run 'dotnet tool restore'" p
-                else tracefn "  would rewrite tool manifest %s (paket -> faket)" p
+                    if rewriteToolManifest faketVersion p then
+                        tracefn "  updated tool manifest %s (paket -> faket %s)" p faketVersion
+                else tracefn "  would rewrite tool manifest %s (paket -> faket %s)" p faketVersion
             | RefreshRestoreTargets r ->
                 if apply then
                     RestoreProcess.extractElement r "Paket.Restore.targets" |> ignore
-                    tracefn "  refreshed .paket/Paket.Restore.targets (faket-aware)"
+                    invalidateRestoreCache r
+                    tracefn "  refreshed .paket/Paket.Restore.targets (faket-aware) and reset restore cache"
                 else tracefn "  would refresh .paket/Paket.Restore.targets (faket-aware)"
             | RemoveLegacyFile p ->
                 if apply then (try File.Delete p with _ -> ()); tracefn "  removed legacy %s" p
                 else tracefn "  would remove legacy %s" p
             | ManualReview d ->
                 traceWarnfn "  MANUAL: %s" d
-        if apply then tracefn "Migration complete. paket.dependencies / paket.lock / paket.references are kept as-is."
+        if apply then
+            tracefn "Migration complete. Run 'dotnet tool restore' then build."
+            tracefn "paket.dependencies / paket.lock / paket.references are kept as-is."
         actions
