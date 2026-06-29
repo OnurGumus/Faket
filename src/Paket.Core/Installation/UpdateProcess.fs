@@ -228,6 +228,13 @@ let SelectiveUpdate(dependenciesFile : DependenciesFile, alternativeProjectRoot,
             dependenciesFile
             updateMode
             semVerUpdateMode
+    // When 'lock_file_hashes: true' is set in paket.dependencies, populate sha512 content
+    // hashes into the lock so it is reproducible (e.g. for Nix) without a separate 'faket hash'.
+    let lockFile =
+        if dependenciesFile.Groups |> Map.exists (fun _ g -> g.Options.LockFileHashes) then
+            tracefn "lock_file_hashes enabled - computing content hashes"
+            HashProcess.addContentHashes lockFile
+        else lockFile
     let hasChanged = lockFile.Save()
     let touchedPackages = 
         [

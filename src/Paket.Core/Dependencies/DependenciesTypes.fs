@@ -10,6 +10,8 @@ open Paket.PackageSources
 /// [omit]
 type InstallOptions =
     { Strict : bool
+      /// When true, 'faket update'/'install' writes sha512 content hashes into paket.lock.
+      LockFileHashes : bool
       Redirects : BindingRedirectsSettings option
       ResolverStrategyForDirectDependencies : ResolverStrategy option
       ResolverStrategyForTransitives : ResolverStrategy option
@@ -17,6 +19,7 @@ type InstallOptions =
 
     static member Default = {
         Strict = false
+        LockFileHashes = false
         Redirects = None
         ResolverStrategyForTransitives = None
         ResolverStrategyForDirectDependencies = None
@@ -51,6 +54,7 @@ type DependenciesGroup = {
                 { Redirects = this.Options.Redirects ++ other.Options.Redirects
                   Settings = this.Options.Settings + other.Options.Settings
                   Strict = this.Options.Strict || other.Options.Strict
+                  LockFileHashes = this.Options.LockFileHashes || other.Options.LockFileHashes
                   ResolverStrategyForDirectDependencies = this.Options.ResolverStrategyForDirectDependencies ++ other.Options.ResolverStrategyForDirectDependencies
                   ResolverStrategyForTransitives = this.Options.ResolverStrategyForTransitives ++ other.Options.ResolverStrategyForTransitives }
               Sources = this.Sources @ other.Sources |> List.distinct

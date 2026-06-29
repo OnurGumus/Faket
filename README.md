@@ -12,7 +12,8 @@ Faket tracks upstream Paket but modernizes the codebase and adds a few capabilit
 - **System.Text.Json** instead of Newtonsoft.Json.
 - **Reproducible (Nix-friendly) lock files.** `faket hash` writes per-package content hashes
   (`sha512: …`) into `paket.lock`. The hashes match NuGet's authoritative `.nupkg.sha512`, so tools
-  like Nix can pin packages reproducibly.
+  like Nix can pin packages reproducibly. Add `lock_file_hashes: true` to `paket.dependencies` to
+  have `faket install`/`update` populate them automatically.
 - **Tamper-evident restore.** `faket restore --verify-hashes` re-hashes each downloaded `.nupkg`
   and fails if it doesn't match the hash recorded in `paket.lock`.
 - **Nix export.** `faket nix` generates a `deps.nix` (`fetchNuGet` entries with SRI `sha512-…`)

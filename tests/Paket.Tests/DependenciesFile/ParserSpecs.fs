@@ -175,6 +175,23 @@ let ``should read strict config``() =
 
     cfg.Groups.[Constants.MainDependencyGroup].Sources |> shouldEqual [PackageSource.NuGetV2Source "http://www.nuget.org/api/v2"]
 
+let lockFileHashesConfig = """
+lock_file_hashes: true
+source "http://www.nuget.org/api/v2"
+
+nuget "FAKE" "~> 3.0"
+"""
+
+[<Test>]
+let ``should read lock_file_hashes option``() =
+    let cfg = DependenciesFile.FromSource(lockFileHashesConfig)
+    cfg.Groups.[Constants.MainDependencyGroup].Options.LockFileHashes |> shouldEqual true
+
+[<Test>]
+let ``lock_file_hashes defaults to false``() =
+    let cfg = DependenciesFile.FromSource(strictConfig)
+    cfg.Groups.[Constants.MainDependencyGroup].Options.LockFileHashes |> shouldEqual false
+
 let redirectsConfig = """
 redirects on
 source "http://www.nuget.org/api/v2" // first source

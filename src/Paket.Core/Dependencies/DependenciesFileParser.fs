@@ -217,6 +217,7 @@ module DependenciesFileParser =
     | CopyContentToOutputDir of CopyToOutputDirectorySettings
     | GenerateLoadScripts of bool option
     | ReferenceCondition of string
+    | LockFileHashes of bool
     | Redirects of BindingRedirectsSettings option
     | ResolverStrategyForTransitives of ResolverStrategy option
     | ResolverStrategyForDirectDependencies of ResolverStrategy option
@@ -371,6 +372,7 @@ module DependenciesFileParser =
                 | _ -> ContentCopySettings.Overwrite
 
             Some (ParserOptions (ParserOption.OmitContent setting))
+        | String.RemovePrefix "lock_file_hashes" trimmed -> Some (ParserOptions (ParserOption.LockFileHashes(trimmed.Replace(":","").Trim() = "true")))
         | String.RemovePrefix "import_targets" trimmed -> Some (ParserOptions (ParserOption.ImportTargets(trimmed.Replace(":","").Trim() = "true")))
         | String.RemovePrefix "license_download" trimmed -> Some (ParserOptions (ParserOption.LicenseDownload(trimmed.Replace(":","").Trim() = "true")))
         | String.RemovePrefix "copy_local" trimmed -> Some (ParserOptions (ParserOption.CopyLocal(trimmed.Replace(":","").Trim() = "true")))
@@ -472,6 +474,7 @@ module DependenciesFileParser =
     let private parseOptions (current  : DependenciesGroup) options =
         match options with
         | ReferencesMode mode                            -> { current.Options with Strict = mode }
+        | LockFileHashes mode                            -> { current.Options with LockFileHashes = mode }
         | Redirects mode                                 -> { current.Options with Redirects = mode }
         | ResolverStrategyForTransitives strategy        -> { current.Options with ResolverStrategyForTransitives = strategy }
         | ResolverStrategyForDirectDependencies strategy -> { current.Options with ResolverStrategyForDirectDependencies = strategy }
