@@ -12,9 +12,6 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup>
-    <DefineConstants>NO_BOOTSTRAPPER;NO_CONFIGURATIONMANAGER;CUSTOM_WEBPROXY;DOTNETCORE;NETSTANDARD1_5;NETSTANDARD1_6;USE_HTTP_CLIENT;$(DefineConstants)</DefineConstants>
-  </PropertyGroup>
   <ItemGroup>
     <None Include="paket.references" />
     <None Include="../../README.md" Pack="true" PackagePath="\" />

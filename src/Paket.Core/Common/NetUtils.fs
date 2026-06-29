@@ -65,9 +65,7 @@ let normalizeFeedUrl (source:string) =
     | "http://www.nuget.org/api/v2" -> Constants.DefaultNuGetStream.Replace("https","http")
     | source -> source
 
-#if CUSTOM_WEBPROXY
 type WebProxy = IWebProxy
-#endif
 
 let envProxies () =
     let getEnvValue (name:string) =
@@ -92,7 +90,6 @@ let envProxies () =
         if isNull envVarValue then None else
         match Uri.TryCreate(envVarValue, UriKind.Absolute) with
         | true, envUri ->
-#if CUSTOM_WEBPROXY
             Some
                 { new IWebProxy with
                     member __.Credentials
@@ -103,13 +100,6 @@ let envProxies () =
                     member __.IsBypassed (host : Uri) =
                         Array.contains (string host) bypassList
                 }
-#else
-            let proxy = WebProxy (Uri (sprintf "http://%s:%d" envUri.Host envUri.Port))
-            proxy.Credentials <- Option.toObj (getCredentials envUri)
-            proxy.BypassProxyOnLocal <- true
-            proxy.BypassList <- bypassList
-            Some proxy
-#endif
         | _ -> None
 
     let addProxy (map:Map<string, WebProxy>) scheme =
@@ -127,7 +117,6 @@ let getDefaultProxyFor =
       (fun (url:string) ->
             let uri = Uri url
             let getDefault () =
-#if CUSTOM_WEBPROXY
                 let result =
                     { new IWebProxy with
                         member __.Credentials
@@ -136,17 +125,7 @@ let getDefaultProxyFor =
                         member __.GetProxy _ = null
                         member __.IsBypassed (_host : Uri) = true
                     }
-#else
-                let result = WebRequest.GetSystemWebProxy()
-#endif
-#if CUSTOM_WEBPROXY
                 let proxy = result
-#else
-                let address = result.GetProxy uri
-                if address = uri then null else
-                let proxy = WebProxy address
-                proxy.BypassProxyOnLocal <- true
-#endif
                 proxy.Credentials <- CredentialCache.DefaultCredentials
                 proxy
 
@@ -185,9 +164,6 @@ type RequestFailedInfo =
         sprintf "Request to '%s' failed with: %i %A — %s" x.Url (int x.StatusCode) x.StatusCode contents
 
 /// Exception for request errors
-#if !NETSTANDARD1_6
-[<System.Serializable>]
-#endif
 type RequestFailedException =
     val private info : RequestFailedInfo option
     inherit Exception
@@ -197,12 +173,6 @@ type RequestFailedException =
     new (info:RequestFailedInfo, inner:exn) = {
       inherit Exception(info.ToString(), inner)
       info = Some info }
-#if !NETSTANDARD1_5
-    new (info:System.Runtime.Serialization.SerializationInfo, context:System.Runtime.Serialization.StreamingContext) = {
-      inherit Exception(info, context)
-      info = None
-    }
-#endif
     member x.Info with get () = x.info
     member x.Wrap() =
         match x.info with
@@ -242,31 +212,6 @@ let (|RequestStatus|_|) (ex:Object) =
     | null -> None
     | _ -> None
 
-
-#if USE_WEB_CLIENT_FOR_UPLOAD
-type System.Net.WebClient with
-    member x.UploadFileAsMultipart (url : Uri) filename =
-        let fileTemplate =
-            "--{0}\r\nContent-Disposition: form-data; name=\"{1}\"; filename=\"{2}\"\r\nContent-Type: {3}\r\n\r\n"
-        let boundary = "---------------------------" + DateTime.Now.Ticks.ToString("x", System.Globalization.CultureInfo.InvariantCulture)
-        let fileInfo = (new FileInfo(Path.GetFullPath(filename)))
-        let fileHeaderBytes =
-            System.String.Format
-                (System.Globalization.CultureInfo.InvariantCulture, fileTemplate, boundary, "package", "package", "application/octet-stream")
-            |> Encoding.UTF8.GetBytes
-        // we use a windows-style newline rather than Environment.NewLine for compatibility
-        let newlineBytes = "\r\n" |> Encoding.UTF8.GetBytes
-        let trailerbytes = String.Format(System.Globalization.CultureInfo.InvariantCulture, "--{0}--", boundary) |> Encoding.UTF8.GetBytes
-        x.Headers.Add(HttpRequestHeader.ContentType, "multipart/form-data; boundary=" + boundary)
-        use stream = x.OpenWrite(url, "PUT")
-        stream.Write(fileHeaderBytes, 0, fileHeaderBytes.Length)
-        use fileStream = File.OpenRead fileInfo.FullName
-        fileStream.CopyTo(stream, (4 * 1024))
-        stream.Write(newlineBytes, 0, newlineBytes.Length)
-        stream.Write(trailerbytes, 0, trailerbytes.Length)
-        stream.Write(newlineBytes, 0, newlineBytes.Length)
-        ()
-#endif
 
 type HttpClient with
     member x.DownloadFileTaskAsync (uri : Uri, tok : CancellationToken, filePath : string) =
@@ -382,9 +327,7 @@ let createHttpHandlerRaw(url, auth: Auth option) : HttpMessageHandler =
             UseProxy = true,
             Proxy = getDefaultProxyFor url)
     handler.AutomaticDecompression <- DecompressionMethods.GZip ||| DecompressionMethods.Deflate
-#if !NO_MAXCONNECTIONPERSERVER
     handler.MaxConnectionsPerServer <- 4
-#endif
     match auth with
     | None -> handler.UseDefaultCredentials <- true
     | Some(Credentials({Username = username; Password = password; Type = AuthType.Basic})) ->
@@ -439,41 +382,6 @@ let createHttpClient (url, auth:Auth option) : HttpClient =
             new System.Net.Http.Headers.AuthenticationHeaderValue("token", token)
     client.DefaultRequestHeaders.Add("user-agent", sprintf "Paket (%s)" paketVersion)
     client
-
-#if USE_WEB_CLIENT_FOR_UPLOAD
-type CustomTimeoutWebClient(timeout) =
-    inherit WebClient()
-    override x.GetWebRequest (uri:Uri) =
-        let w = base.GetWebRequest(uri)
-        w.Timeout <- timeout
-        w
-
-let createWebClient (url,auth:Auth option) =
-    let client = new CustomTimeoutWebClient(uploadRequestTimeoutInMs)
-    client.Headers.Add("User-Agent", "Paket")
-    client.Proxy <- getDefaultProxyFor url
-
-    match auth with
-    | Some (Credentials({Username = username; Password = password; Type = AuthType.Basic})) ->
-        // htttp://stackoverflow.com/questions/16044313/webclient-httpwebrequest-with-basic-authentication-returns-404-not-found-for-v/26016919#26016919
-        //this works ONLY if the server returns 401 first
-        //client DOES NOT send credentials on first request
-        //ONLY after a 401
-        //client.Credentials <- new NetworkCredential(auth.Username,auth.Password)
-
-        //so use THIS instead to send credentials RIGHT AWAY
-        let credentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(username + ":" + password))
-        client.Headers.[HttpRequestHeader.Authorization] <- sprintf "Basic %s" credentials
-        client.Credentials <- new NetworkCredential(username,password)
-    | Some (Credentials{Username = username; Password = password; Type = AuthType.NTLM}) ->
-        let cred = NetworkCredential(username,password)
-        client.Credentials <- cred.GetCredential(new Uri(url), "NTLM")
-    | Some (Token token) ->
-        client.Headers.[HttpRequestHeader.Authorization] <- sprintf "token %s" token
-    | None ->
-        client.UseDefaultCredentials <- true
-    client
-#endif
 
 #nowarn "40"
 
