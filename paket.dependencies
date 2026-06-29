@@ -10,15 +10,12 @@ nuget Mono.Cecil ~> 0.11.1
 
 nuget System.Security.Cryptography.ProtectedData >= 4.4
 
-nuget NETStandard.Library ~> 2.0
 nuget System.Net.Http.WinHttpHandler >= 4.5
-nuget Nuget.Packaging
+nuget NuGet.Packaging ~> 7.0
 nuget Microsoft.Win32.Registry
 nuget System.Diagnostics.TraceSource
 
-# these two are not public dependencies, they're used for build-time only
-# therefore, treat them as private.
-nuget Microsoft.NETFramework.ReferenceAssemblies.net461 copy_local: true
+# build-time only, treated as private.
 nuget DotNet.ReproducibleBuilds copy_local: true
 
 # tests
