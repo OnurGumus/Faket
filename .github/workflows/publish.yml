@@ -1,0 +1,57 @@
+name: Publish
+
+# Publishes the Faket dotnet tool to NuGet.org using NuGet Trusted Publishing (OIDC) -
+# no long-lived API key is stored in the repo.
+#
+# One-time setup on nuget.org (Account -> Trusted Publishing):
+#   1. Create a trusted publisher policy for the package id "Faket".
+#   2. Set: Repository owner = <your GitHub user/org>, Repository = Faket,
+#      Workflow file = publish.yml, Environment = (leave blank or "release").
+#   3. In this repo's Settings -> Secrets and variables -> Actions -> Variables,
+#      add a variable NUGET_USER = your nuget.org username.
+# Then publishing happens automatically when you publish a GitHub Release
+# (or run this workflow manually).
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # required for OIDC token used by NuGet trusted publishing
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET (from global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+
+      - name: Paket restore
+        run: dotnet paket restore
+
+      # Only the self-contained Faket tool is packed; Paket.Core et al. are bundled inside it
+      # (and are marked IsPackable=false to avoid colliding with upstream package ids).
+      - name: Pack
+        run: dotnet pack src/Paket/Paket.fsproj -c Release -o artifacts
+
+      - name: NuGet login (trusted publishing)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Push to NuGet.org
+        run: >-
+          dotnet nuget push "artifacts/*.nupkg"
+          --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate

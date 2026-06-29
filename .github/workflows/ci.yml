@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET (from global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Faket builds with paket; bootstrap via the pinned dotnet tool, then restore packages.
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+
+      - name: Paket restore
+        run: dotnet paket restore
+
+      - name: Build
+        run: dotnet build Paket.sln -c Release
+
+      # The two excluded tests are pre-existing/environmental, not Faket regressions:
+      #   - TestCategory=Flaky: upstream-flagged unstable on .NET Core runtimes
+      #   - PackagingProcess: asserts assembly version == RELEASE_NOTES, which needs the
+      #     legacy FAKE build's version injection (absent under plain `dotnet test`)
+      - name: Unit tests
+        run: >-
+          dotnet test tests/Paket.Tests/Paket.Tests.fsproj -c Release --no-build
+          --filter "TestCategory!=Flaky & FullyQualifiedName!~PackagingProcess"
