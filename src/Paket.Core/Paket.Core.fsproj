@@ -84,6 +84,7 @@
     <Compile Include="Installation\ScriptGeneration.fs" />
     <Compile Include="Installation\GarbageCollection.fs" />
     <Compile Include="Installation\RestoreProcess.fs" />
+    <Compile Include="Installation\HashProcess.fs" />
     <Compile Include="Installation\InstallProcess.fs" />
     <Compile Include="Installation\UpdateProcess.fs" />
     <Compile Include="PackageAnalysis\Queries.fs" />

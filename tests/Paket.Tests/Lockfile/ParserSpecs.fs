@@ -1043,3 +1043,25 @@ let ``should parse lock file with cli tool``() =
     LockFileSerializer.serializePackages main.Options (main.Packages |> List.map (fun p -> p.Name,p) |> Map.ofList)
     |> normalizeLineEndings
     |> shouldEqual (normalizeLineEndings lockFileWithCLiTool)
+
+let lockFileWithContentHashes = """NUGET
+  remote: https://www.nuget.org/api/v2
+    Argu (2.1) - sha512: 7r8s9t0u1v2w3x4y5z==
+    Castle.Core (4.4.1) - restriction: >= netstandard2.0, sha512: aB+cD/eF12gh==
+    FSharp.Core (4.0.0.1) - redirects: force, sha512: ZZ99zz00=="""
+
+[<Test>]
+let ``should parse and serialize sha512 content hashes``() =
+    let lockFile = LockFileParser.Parse(toLines lockFileWithContentHashes)
+    let main = lockFile.Head
+    let packages = List.rev main.Packages
+    let byName n = packages |> List.find (fun p -> p.Name = PackageName n)
+
+    (byName "Argu").ContentHash |> shouldEqual (Some "7r8s9t0u1v2w3x4y5z==")
+    (byName "Castle.Core").ContentHash |> shouldEqual (Some "aB+cD/eF12gh==")
+    (byName "Castle.Core").HasFrameworkRestrictions |> shouldEqual true
+    (byName "FSharp.Core").ContentHash |> shouldEqual (Some "ZZ99zz00==")
+
+    LockFileSerializer.serializePackages main.Options (main.Packages |> List.map (fun p -> p.Name,p) |> Map.ofList)
+    |> normalizeLineEndings
+    |> shouldEqual (normalizeLineEndings lockFileWithContentHashes)

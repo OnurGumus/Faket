@@ -65,6 +65,9 @@ type ResolvedPackage = {
     Kind                : ResolvedPackageKind
     Settings            : InstallSettings
     Source              : PackageSource
+    /// Base64 SHA512 of the resolved .nupkg, when known. Persisted to paket.lock as
+    /// `sha512: ...` so consumers (e.g. Nix) can pin packages reproducibly.
+    ContentHash         : string option
 } with
     override this.ToString () = sprintf "%O %O" this.Name this.Version
 
@@ -506,6 +509,7 @@ let private explorePackageConfig (getPackageDetailsBlock:PackageDetailsSyncFunc)
               Kind                = if Set.contains packageDetails.Name pkgConfig.CliTools then ResolvedPackageKind.DotnetCliTool
                                     else ResolvedPackageKind.Package
               IsRuntimeDependency = false
+              ContentHash         = None
             }
     with
     | exn ->

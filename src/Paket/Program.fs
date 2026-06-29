@@ -741,6 +741,10 @@ let showGroups (results : ParseResults<ShowGroupsArgs>) =
     for groupName in dependenciesFile.GetGroups() do
         tracefn "%s" groupName
 
+let hash (results : ParseResults<HashArgs>) =
+    let dependenciesFile = Dependencies.Locate()
+    Paket.HashProcess.Run(dependenciesFile.DependenciesFile) |> ignore
+
 let showConditions (results : ParseResults<ShowConditionsArgs>) =
     let dependenciesFile = Dependencies.Locate()
     for condition in dependenciesFile.GetConditions() do
@@ -894,6 +898,7 @@ let handleCommand silent command =
     | Outdated r -> processCommand silent outdated r
     | Remove r -> processCommand silent remove r
     | Restore r -> processCommand silent restore r
+    | Hash r -> processCommand silent hash r
     | Simplify r -> processCommand silent simplify r
     | Update r -> processCommand silent update r
     | FindPackages r -> processCommand silent (findPackages silent) r

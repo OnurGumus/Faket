@@ -150,6 +150,13 @@ module LockFileSerializer =
                         | true, s -> s + ", isRuntimeDependency: true"
                         | _, s -> s
 
+                      let s =
+                        // add "sha512" content hash (kept last so the parser can peel it off the end)
+                        match package.ContentHash, s with
+                        | Some h, "" -> sprintf "sha512: %s" h
+                        | Some h, s -> s + sprintf ", sha512: %s" h
+                        | None, s -> s
+
 
                       if s = "" then
                           yield sprintf "    %s %s" (writePackageName package.Name) versionStr
@@ -429,6 +436,16 @@ module LockFileParser =
                 else
                     parts.[1]
 
+            // sha512 is serialized last, so peel it off before the other suffix tokens
+            let contentHash, optionsString =
+                match optionsString.LastIndexOf(", sha512: ") with
+                | -1 ->
+                    if optionsString.StartsWith "sha512: " then
+                        Some (optionsString.Substring("sha512: ".Length)), ""
+                    else None, optionsString
+                | idx ->
+                    Some (optionsString.Substring(idx + ", sha512: ".Length)), optionsString.Substring(0, idx)
+
             let kind, optionsString =
                 if optionsString.EndsWith ", clitool: true" then
                     ResolvedPackageKind.DotnetCliTool,optionsString.Replace(", clitool: true","")
@@ -445,7 +462,7 @@ module LockFileParser =
                     true, ""
                 else false, optionsString
 
-            parts.[0],kind,isRuntimeDependency,InstallSettings.Parse(true, optionsString)
+            parts.[0],kind,isRuntimeDependency,contentHash,InstallSettings.Parse(true, optionsString)
 
         ([{ GroupName = Constants.MainDependencyGroup; RepositoryType = None; RemoteUrl = None; Packages = []; SourceFiles = []; Options = InstallOptions.Default; LastWasPackage = false }], lockFileLines)
         ||> Seq.fold(fun state line ->
@@ -480,7 +497,7 @@ module LockFileParser =
                 | NugetPackage details ->
                     match currentGroup.RemoteUrl with
                     | Some remote ->
-                        let package,kind,isRuntimeDependency,settings = parsePackage details
+                        let package,kind,isRuntimeDependency,contentHash,settings = parsePackage details
                         let parts' = package.Split ' '
                         let version =
                             if parts'.Length < 2 then
@@ -499,11 +516,11 @@ module LockFileParser =
                                       Settings = settings
                                       Version = SemVer.Parse version
                                       Kind = kind
-                                      // TODO: write stuff into the lockfile and read it here
+                                      ContentHash = contentHash
                                       IsRuntimeDependency = isRuntimeDependency } :: currentGroup.Packages }::otherGroups
                     | None -> failwith "no source has been specified."
                 | NugetDependency (name, v, frameworkSettings) ->
-                    let version,_,isRuntimeDependency,settings = parsePackage v
+                    let version,_,isRuntimeDependency,_,settings = parsePackage v
                     assert (not isRuntimeDependency)
                     if currentGroup.LastWasPackage then
                         match currentGroup.Packages with
