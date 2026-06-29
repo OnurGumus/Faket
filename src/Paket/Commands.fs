@@ -297,11 +297,14 @@ type RestoreArgs =
 
     | [<Unique>] Target_Framework of framework:string
     | [<Unique>] Output_Path of path:string
+    | [<Unique;CustomCommandLine("--verify-hashes")>] Verify_Hashes
 with
     interface IArgParserTemplate with
         member this.Usage =
             match this with
             | Force -> "force download and reinstallation of all dependencies"
+
+            | Verify_Hashes -> "after restoring, verify each package's .nupkg against the sha512 recorded in paket.lock and fail on any mismatch"
 
             | Group _ -> "restore dependencies of a single group"
             | Group_Legacy _ -> "[obsolete]"

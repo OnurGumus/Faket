@@ -452,15 +452,20 @@ let restore (results : ParseResults<_>) =
     let failOnChecks = results.Contains RestoreArgs.Fail_On_Checks
     let targetFramework = results.TryGetResult RestoreArgs.Target_Framework
     let outputPath = results.TryGetResult RestoreArgs.Output_Path
+    let verifyHashes = results.Contains RestoreArgs.Verify_Hashes
 
+    let dependencies = Dependencies.Locate()
     match project with
     | Some project ->
-        Dependencies.Locate().Restore(force, group, project, touchAffectedRefs, ignoreChecks, failOnChecks, targetFramework, outputPath)
+        dependencies.Restore(force, group, project, touchAffectedRefs, ignoreChecks, failOnChecks, targetFramework, outputPath)
     | None ->
         if List.isEmpty files then
-            Dependencies.Locate().Restore(force, group, installOnlyReferenced, touchAffectedRefs, ignoreChecks, failOnChecks, targetFramework, outputPath)
+            dependencies.Restore(force, group, installOnlyReferenced, touchAffectedRefs, ignoreChecks, failOnChecks, targetFramework, outputPath)
         else
-            Dependencies.Locate().Restore(force, group, files, touchAffectedRefs, ignoreChecks, failOnChecks, targetFramework, outputPath)
+            dependencies.Restore(force, group, files, touchAffectedRefs, ignoreChecks, failOnChecks, targetFramework, outputPath)
+
+    if verifyHashes then
+        Paket.HashProcess.Verify dependencies.DependenciesFile
 
 let simplify (results : ParseResults<_>) =
     let interactive = results.Contains SimplifyArgs.Interactive
