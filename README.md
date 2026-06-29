@@ -1,12 +1,22 @@
-[![Travis build status](https://api.travis-ci.org/fsprojects/Paket.svg?branch=master)](https://travis-ci.org/fsprojects/Paket?branch=master)
-[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/f77ejdp6mtkris2u/branch/master?svg=true)](https://ci.appveyor.com/project/paket/paket/branch/master)
-[![NuGet Status](https://img.shields.io/nuget/v/Paket.svg?style=flat)](https://www.nuget.org/packages/Paket/)
-[![Join the chat at https://gitter.im/fsprojects/Paket](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fsprojects/Paket?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Twitter](https://img.shields.io/badge/Twitter-PaketManager-blue.svg)](https://twitter.com/PaketManager)
+# Faket
 
-# Paket
+A modern .NET 10 fork of [Paket](https://github.com/fsprojects/Paket) — a dependency manager for
+.NET with support for NuGet packages and git repositories.
 
-A dependency manager for .NET with support for NuGet packages and git repositories.
+## What's different in Faket
+
+Faket tracks upstream Paket but modernizes the codebase and adds a few capabilities:
+
+- **.NET 10 only.** Dropped `net461`/`netstandard2.0`/`netcoreapp2.1`, the C# bootstrapper, ILRepack
+  assembly merging and mono support. One clean `net10.0` target.
+- **System.Text.Json** instead of Newtonsoft.Json.
+- **Reproducible (Nix-friendly) lock files.** `faket hash` writes per-package content hashes
+  (`sha512: …`) into `paket.lock`. The hashes match NuGet's authoritative `.nupkg.sha512`, so tools
+  like Nix can pin packages reproducibly.
+- The CLI command is **`faket`** (the package id is `Faket`).
+
+Internals keep the `Paket.*` namespaces so upstream fixes remain easy to merge. Everything below is
+inherited Paket documentation; substitute `faket` for `paket` on the command line.
 
 ## Why Paket?
 

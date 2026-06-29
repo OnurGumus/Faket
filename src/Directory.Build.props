@@ -5,11 +5,11 @@
     <DebugType>embedded</DebugType>
     <!-- package metadata -->
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Description>A dependency manager for .NET with support for NuGet packages and git repositories.</Description>
+    <Description>Faket - a modern .NET 10 fork of Paket: a dependency manager for .NET with support for NuGet packages and git repositories, with reproducible (Nix-friendly) content hashes in paket.lock.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageProjectUrl>http://fsprojects.github.io/Paket</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/fsprojects/Paket</PackageProjectUrl>
     <PackageIcon>logo.png</PackageIcon>
-    <PackageTags>nuget;bundler;F#</PackageTags>
-    <Authors>Paket team</Authors>
+    <PackageTags>nuget;bundler;F#;nix</PackageTags>
+    <Authors>Faket contributors; Paket team</Authors>
   </PropertyGroup>
 </Project>

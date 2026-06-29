@@ -32,7 +32,7 @@ let mutable tracedVersion = false
 let tracePaketVersion silent =
     if not silent && not tracedVersion then
         tracedVersion <- true
-        tracefn "Paket version %s" paketVersion
+        tracefn "Faket version %s" paketVersion
 
 let processWithValidationEx printUsage silent validateF commandF result =
     tracePaketVersion silent
@@ -972,8 +972,8 @@ let main() =
             (fun _ -> true)
             (fun _ -> Dependencies.Locate().Install(false, false, false, false, false, SemVerUpdateMode.NoRestriction, false, false, [], [], None)) ()
     | _ ->
-        let parser = ArgumentParser.Create<Command>(programName = "paket",
-                                                    helpTextMessage = sprintf "Paket version %s%sHelp was requested:" paketVersion Environment.NewLine,
+        let parser = ArgumentParser.Create<Command>(programName = "faket",
+                                                    helpTextMessage = sprintf "Faket version %s%sHelp was requested:" paketVersion Environment.NewLine,
                                                     errorHandler = new PaketExiter(),
                                                     checkStructure = false)
 

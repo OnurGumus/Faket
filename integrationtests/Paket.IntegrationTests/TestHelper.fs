@@ -20,7 +20,7 @@ let dotnetToolPath =
     | s -> s
 
 let paketToolPath =
-    dotnetToolPath, FullName(__SOURCE_DIRECTORY__ + "/../../src/Paket/bin/Release/net10.0/paket.dll")
+    dotnetToolPath, FullName(__SOURCE_DIRECTORY__ + "/../../src/Paket/bin/Release/net10.0/faket.dll")
 
 let paketBootstrapperToolPath =
 #if PAKET_NETCORE

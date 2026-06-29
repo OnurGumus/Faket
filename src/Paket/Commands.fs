@@ -757,10 +757,10 @@ with
             | Log_File _ -> "print output to a file"
             | Silent -> "suppress console output"
             | Verbose -> "print detailed information to the console"
-            | Version -> "show Paket version"
+            | Version -> "show Faket version"
             | From_Bootstrapper -> "call coming from the '--run' feature of the bootstrapper"
 
-let commandParser = ArgumentParser.Create<Command>(programName = "paket", errorHandler = new ProcessExiter(), checkStructure = false)
+let commandParser = ArgumentParser.Create<Command>(programName = "faket", errorHandler = new ProcessExiter(), checkStructure = false)
 
 let markdown (subParser : ArgumentParser) (width : int) (additionalText : string) =
     let ensureLineBreak (text : string) = if String.IsNullOrEmpty(text) then text else text + Environment.NewLine + Environment.NewLine
