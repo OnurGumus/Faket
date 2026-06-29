@@ -325,6 +325,7 @@ type FrameworkVersion =
     | V8
     | V9
     | V10
+    | V11
     override this.ToString() =
         match this with
         | V1        -> "v1.0"
@@ -353,6 +354,7 @@ type FrameworkVersion =
         | V8        -> "v8.0"
         | V9        -> "v9.0"
         | V10       -> "v10.0"
+        | V11       -> "v11.0"
 
     member this.ShortString() =
         match this with
@@ -382,6 +384,7 @@ type FrameworkVersion =
         | FrameworkVersion.V8 -> "8.0"
         | FrameworkVersion.V9 -> "9.0"
         | FrameworkVersion.V10 -> "10.0"
+        | FrameworkVersion.V11 -> "11.0"
 
     static member TryParse s =
         match s with
@@ -411,6 +414,7 @@ type FrameworkVersion =
         | "8" -> Some FrameworkVersion.V8
         | "9" -> Some FrameworkVersion.V9
         | "10.0" -> Some FrameworkVersion.V10
+        | "11" | "11.0" -> Some FrameworkVersion.V11
         | _ -> None
 
 [<RequireQualifiedAccess>]
@@ -995,6 +999,7 @@ type FrameworkIdentifier =
         | DotNetFramework FrameworkVersion.V8 -> [ DotNetFramework FrameworkVersion.V7 ]
         | DotNetFramework FrameworkVersion.V9 -> [ DotNetFramework FrameworkVersion.V8 ]
         | DotNetFramework FrameworkVersion.V10 -> [ DotNetFramework FrameworkVersion.V9 ]
+        | DotNetFramework FrameworkVersion.V11 -> [ DotNetFramework FrameworkVersion.V10 ]
         | DotNet5WithOs Net5Os.Android -> [ DotNetFramework FrameworkVersion.V5; MonoAndroid MonoAndroidVersion.V12 ]
         | DotNet5WithOs Net5Os.IOs -> [ DotNetFramework FrameworkVersion.V5; XamariniOS ]
         | DotNet5WithOs Net5Os.MacOs -> [ DotNetFramework FrameworkVersion.V5; XamarinMac ]
@@ -1645,6 +1650,7 @@ module KnownTargetProfiles =
         FrameworkVersion.V8
         FrameworkVersion.V9
         FrameworkVersion.V10
+        FrameworkVersion.V11
     ]
 
     let DotNetFrameworkIdentifiers =

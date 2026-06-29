@@ -361,6 +361,19 @@ let ``Can detect a bunch of net10 platforms``() =
     failwith (String.concat "\n" errors)
 
 [<Test>]
+let ``Can detect net11.0``() =
+  // Base net11.0 TFM. OS-specific variants (net11.0-windows/-android) are not yet modelled.
+  let parsed = (PlatformMatching.forceExtractPlatforms "net11.0").ToTargetProfile false
+  parsed |> shouldEqual (Some (TargetProfile.SinglePlatform (FrameworkIdentifier.DotNetFramework FrameworkVersion.V11)))
+
+[<Test>]
+let ``net11 is compatible with net10`` () =
+  FrameworkVersion.TryParse "11.0" |> shouldEqual (Some FrameworkVersion.V11)
+  (FrameworkIdentifier.DotNetFramework FrameworkVersion.V11).RawSupportedPlatformsTransitive
+  |> Seq.contains (FrameworkIdentifier.DotNetFramework FrameworkVersion.V10)
+  |> shouldEqual true
+
+[<Test>]
 let ``Can detect netstandard1.6``() =
     let p = PlatformMatching.forceExtractPlatforms "netstandard1.6"
     p.ToTargetProfile false |> shouldEqual (Some (TargetProfile.SinglePlatform (FrameworkIdentifier.DotNetStandard DotNetStandardVersion.V1_6)))
