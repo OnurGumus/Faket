@@ -1,0 +1,131 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
+    <AutoGenerateBindingRedirects Condition=" '$(TargetFramework)' == 'net461' ">true</AutoGenerateBindingRedirects>
+    <Version Condition="'$(PAKET_PROJ_VERSION)' != ''">$(PAKET_PROJ_VERSION)</Version>
+    <PackageVersion Condition="'$(PAKET_PROJ_VERSION)' != ''">$(PAKET_PROJ_VERSION)</PackageVersion>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(TargetFramework)' != 'net461' ">
+    <DefineConstants>NO_BOOTSTRAPPER;NO_CONFIGURATIONMANAGER;CUSTOM_WEBPROXY;$(DefineConstants)</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net461' ">
+    <DefineConstants>USE_WEB_CLIENT_FOR_UPLOAD;NO_MAXCONNECTIONPERSERVER</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="paket.references" />
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+    <None Include="../../docs/files/img/logo.png" Pack="true" PackagePath="\" />
+    <EmbeddedResource Include="embedded\Paket.Restore.targets">
+      <LogicalName>Paket.Restore.targets</LogicalName>
+    </EmbeddedResource>
+    <Compile Include="..\..\paket-files\fsprojects\FSharp.TypeProviders.SDK\src\AssemblyReader.fs">
+      <Paket>True</Paket>
+      <Link>Common/AssemblyReader.fs</Link>
+    </Compile>
+    <Compile Include="..\..\paket-files\fsharp\FAKE\src\app\FakeLib\Globbing\Globbing.fs">
+      <Paket>True</Paket>
+      <Link>Common/Globbing.fs</Link>
+    </Compile>
+    <Compile Include="Common\Async.fs" />
+    <Compile Include="Common\Logging.fsi" />
+    <Compile Include="Common\Logging.fs" />
+    <Compile Include="Common\Domain.fs" />
+    <Compile Include="Common\Constants.fs" />
+    <Compile Include="Common\Profile.fs" />
+    <Compile Include="Common\Utils.fs" />
+    <Compile Include="Common\Encryption.fs" />
+    <Compile Include="Common\Xml.fs" />
+    <Compile Include="Common\ProcessHelper.fs" />
+    <Compile Include="Common\SymlinkUtils.fs" />
+    <Compile Include="Common\NetUtils.fs" />
+    <Compile Include="Versioning\SemVer.fs" />
+    <Compile Include="Versioning\VersionRange.fs" />
+    <Compile Include="Versioning\FrameworkHandling.fs" />
+    <Compile Include="Versioning\PlatformMatching.fs" />
+    <Compile Include="Versioning\ConfigFile.fs" />
+    <Compile Include="Versioning\CredentialProviders.fs" />
+    <Compile Include="Versioning\AuthService.fs" />
+    <Compile Include="Versioning\Cache.fs" />
+    <Compile Include="Versioning\PackageSources.fs" />
+    <Compile Include="Versioning\Requirements.fs" />
+    <Compile Include="Versioning\InterprojectReferencesConstraint.fs" />
+    <Compile Include="Dependencies\GitCommandHelper.fs" />
+    <Compile Include="Dependencies\GitHandling.fs" />
+    <Compile Include="Dependencies\ModuleResolver.fs" />
+    <Compile Include="Dependencies\RemoteDownload.fs" />
+    <Compile Include="Dependencies\RemoteUpload.fs" />
+    <Compile Include="Dependencies\DependenciesTypes.fs" />
+    <Compile Include="Dependencies\PackageResolver.fs" />
+    <Compile Include="Dependencies\Nuspec.fs" />
+    <Compile Include="Dependencies\NuGetCache.fs" />
+    <Compile Include="Dependencies\CacheExtensions.fs" />
+    <Compile Include="Dependencies\NuGetV3.fs" />
+    <Compile Include="Dependencies\NuGetV2.fs" />
+    <Compile Include="Dependencies\NuGetLocal.fs" />
+    <Compile Include="Dependencies\NuGet.fs" />
+    <Compile Include="Dependencies\DependenciesFileParser.fs" />
+    <Compile Include="PaketConfigFiles\RuntimeGraph.fs" />
+    <Compile Include="PaketConfigFiles\InstallModel.fs" />
+    <Compile Include="PaketConfigFiles\ReferencesFile.fs" />
+    <Compile Include="PaketConfigFiles/SolutionFile.fs" />
+    <Compile Include="PaketConfigFiles/LockFile.fs" />
+    <Compile Include="PaketConfigFiles/TemplateFile.fs" />
+    <Compile Include="PaketConfigFiles\Cultures.fs" />
+    <Compile Include="PaketConfigFiles\ProjectFile.fs" />
+    <Compile Include="PaketConfigFiles/DependenciesFile.fs" />
+    <Compile Include="PaketConfigFiles/PackagesConfigFile.fs" />
+    <Compile Include="PaketConfigFiles\LocalFile.fs" />
+    <Compile Include="PaketConfigFiles\DependencyCache.fs" />
+    <Compile Include="Installation\ProcessOptions.fs" />
+    <Compile Include="Installation\BindingRedirects.fs" />
+    <Compile Include="Installation\DependencyChangeDetection.fs" />
+    <Compile Include="Installation\ScriptGeneration.fs" />
+    <Compile Include="Installation\GarbageCollection.fs" />
+    <Compile Include="Installation\RestoreProcess.fs" />
+    <Compile Include="Installation\InstallProcess.fs" />
+    <Compile Include="Installation\UpdateProcess.fs" />
+    <Compile Include="PackageAnalysis\Queries.fs" />
+    <Compile Include="PackageAnalysis\Environment.fs" />
+    <Compile Include="PackageAnalysis\FindOutdated.fs" />
+    <Compile Include="PackageAnalysis\FindReferences.fs" />
+    <Compile Include="PackageAnalysis\DependencyModel.fs" />
+    <Compile Include="PackageAnalysis\Simplifier.fs" />
+    <Compile Include="PackageAnalysis\Why.fs" />
+    <Compile Include="PackageManagement\Releases.fs" />
+    <Compile Include="PackageManagement\VSIntegration.fs" />
+    <Compile Include="PackageManagement\AddProcess.fs" />
+    <Compile Include="PackageManagement\NugetConvert.fs" />
+    <Compile Include="PackageManagement\RemoveProcess.fs" />
+    <Compile Include="Packaging\NupkgWriter.fs" />
+    <Compile Include="Packaging\PackageMetaData.fs" />
+    <Compile Include="Packaging\PackageProcess.fs" />
+    <Compile Include="PublicAPI.fs" />
+    <None Include="paket.template" />
+    <Content Include="app.config" Condition=" '$(TargetFramework)' == 'net461' " />
+    <None Include="Prototypes\script-generation.fsx" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461'">
+    <Reference Include="System.Configuration, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="System.IO.Compression, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+    <Reference Include="System.Net.Http, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="System.Security, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  </ItemGroup>
+  <PropertyGroup Condition=" '$(TargetFramework)' != 'net461' ">
+    <DefineConstants>$(DefineConstants);DOTNETCORE;NETSTANDARD1_5;NETSTANDARD1_6;USE_HTTP_CLIENT</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+    <_Parameter1>Paket.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

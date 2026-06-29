@@ -1,0 +1,58 @@
+source https://api.nuget.org/v3/index.json
+
+storage: none
+content: none
+
+nuget Newtonsoft.Json >= 10.0.3 redirects: force
+nuget Argu >= 5.1.0
+nuget FSharp.Core >= 6.0.3
+nuget Chessie >= 0.6
+nuget Mono.Cecil ~> 0.11.1
+
+nuget System.Security.Cryptography.ProtectedData >= 4.4
+
+nuget NETStandard.Library ~> 2.0
+nuget System.Net.Http.WinHttpHandler >= 4.5
+nuget Nuget.Packaging
+nuget Microsoft.Win32.Registry
+nuget System.Diagnostics.TraceSource
+
+# these two are not public dependencies, they're used for build-time only
+# therefore, treat them as private.
+nuget Microsoft.NETFramework.ReferenceAssemblies.net461 copy_local: true
+nuget DotNet.ReproducibleBuilds copy_local: true
+
+# tests
+nuget Moq
+nuget FSCheck
+nuget FSharp.Compiler.Service
+
+nuget NUnit ~> 3.12.0
+nuget NUnit3TestAdapter ~> 3.13.0
+nuget Microsoft.NET.Test.Sdk ~> 16.2.0
+
+nuget Fake.Core.ReleaseNotes ~> 5.20.4
+
+github fsharp/FAKE:0341a2e614eb2a7f34607cec914eb0ed83ce9add src/app/FakeLib/Globbing/Globbing.fs
+github fsprojects/FSharp.TypeProviders.SDK:dc5ac01a1ac288eceb1fd6f12a5d388236f4f8e5 src/AssemblyReader.fs
+github forki/FsUnit FsUnit.fs
+
+group Build
+  content: none
+  framework >= net461
+  source https://api.nuget.org/v3/index.json
+  source https://ci.appveyor.com/nuget/fsharp-formatting
+
+  nuget FAKE < 5
+  nuget FSharp.Formatting prerelease
+  nuget System.ValueTuple
+  nuget Microsoft.AspNet.Razor
+  nuget ILRepack
+
+  github fsharp/FAKE modules/Octokit/Octokit.fsx
+
+  # Note: this package was produced using https://github.com/jaredpar/xcopy-msbuild and contains the two directories ".NETFramework\v4.5" and ".NETPortable\v4.5"
+  nuget 0x53A.ReferenceAssemblies.Paket 0.2.0
+
+  # add icon to exe
+  github enricosada/add_icon_to_exe:e11eda501acea369ac2950beb34b8888495bf21f rh/ResourceHacker.exe

@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net461;net9</TargetFrameworks>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <DefineConstants Condition=" '$(TargetFramework)' != 'net461'">PAKET_NETCORE;NO_UNIT_PLATFORMATTRIBUTE;TESTSUITE_KNOWN_FAILURE_DOTNETCORE_3005;FAKE_NETSTANDARD_API;@(DefineConstants)</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="FsiExtension.fs" />
+    <Compile Include="..\..\paket-files\forki\FsUnit\FsUnit.fs">
+      <Paket>True</Paket>
+      <Link>FsUnit.fs</Link>
+    </Compile>
+    <Compile Include="TestHelper.fs" />
+    <Compile Include="NugetDownloadSpecs.fs" />
+    <Compile Include="InitSpecs.fs" />
+    <Compile Include="InfoSpecs.fs" />
+    <Compile Include="NuGetV3Specs.fs" />
+    <Compile Include="UpdatePackageSpecs.fs" />
+    <Compile Include="UpdateGroupsSpecs.fs" />
+    <Compile Include="AddSpecs.fs" />
+    <Compile Include="OutdatedSpecs.fs" />
+    <Compile Include="PackSpecs.fs" />
+    <Compile Include="InstallSpecs.fs" />
+    <Compile Include="RestoreSpecs.fs" />
+    <Compile Include="FrameworkRestrictionsSpecs.fs" />
+    <Compile Include="HttpSpecs.fs" />
+    <Compile Include="PaketCoreSpecs.fs" />
+    <Compile Include="BasicResolverSpecs.fs" />
+    <Compile Include="ConvertFromNuGetSpecs.fs" />
+    <Compile Include="SemVerUpdateSpecs.fs" />
+    <Compile Include="ResolverSkipsConflictsFastSpecs.fs" />
+    <Compile Include="AutocompleteSpecs.fs" />
+    <Compile Include="BindingRedirect.fs" />
+    <Compile Include="LoadingScriptGenerationTests.fs" />
+    <Compile Include="LocalOverrideSpecs.fs" />
+    <Compile Include="SimplifierSpecs.fs" />
+    <Compile Include="SymbolicLinkSpecs.fs" />
+    <None Include="paket.references" />
+    <Content Include="App.config" />
+    <Compile Include="AddGithubSpecs.fs" />
+    <Compile Include="ConditionSpecs.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Paket.Core\Paket.Core.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- TODO check this ref, should we use FakeLib package? -->
+    <Reference Include="FakeLib">
+      <HintPath>..\..\packages\build\FAKE\tools\FakeLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>
