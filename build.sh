@@ -7,7 +7,7 @@ set -euo pipefail
 target="${1:-build}"
 
 dotnet tool restore
-dotnet paket restore
+dotnet faket restore
 
 case "$target" in
   build)

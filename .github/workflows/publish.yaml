@@ -6,7 +6,7 @@ name: Publish
 # One-time setup on nuget.org (Account -> Trusted Publishing):
 #   1. Create a trusted publisher policy for the package id "Faket".
 #   2. Set: Repository owner = <your GitHub user/org>, Repository = Faket,
-#      Workflow file = publish.yml, Environment = (leave blank or "release").
+#      Workflow file = publish.yaml, Environment = (leave blank or "release").
 #   3. In this repo's Settings -> Secrets and variables -> Actions -> Variables,
 #      add a variable NUGET_USER = your nuget.org username.
 # Then publishing happens automatically when you publish a GitHub Release
@@ -36,7 +36,7 @@ jobs:
         run: dotnet tool restore
 
       - name: Paket restore
-        run: dotnet paket restore
+        run: dotnet faket restore
 
       # Only the self-contained Faket tool is packed; Paket.Core et al. are bundled inside it
       # (and are marked IsPackable=false to avoid colliding with upstream package ids).

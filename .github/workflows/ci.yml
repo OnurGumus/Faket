@@ -18,12 +18,12 @@ jobs:
         with:
           global-json-file: global.json
 
-      # Faket builds with paket; bootstrap via the pinned dotnet tool, then restore packages.
+      # Faket builds itself: bootstrap the pinned faket dotnet tool, then restore packages.
       - name: Restore dotnet tools
         run: dotnet tool restore
 
-      - name: Paket restore
-        run: dotnet paket restore
+      - name: Faket restore
+        run: dotnet faket restore
 
       - name: Build
         run: dotnet build Paket.sln -c Release
