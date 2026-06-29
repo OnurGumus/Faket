@@ -1,7 +1,6 @@
 ﻿open System
-open Newtonsoft.Json
 open System.IO
-open Newtonsoft.Json.Linq
+open System.Text.Json.Nodes
 open Paket
 open Paket.Domain
 
@@ -10,15 +9,15 @@ let paketPath = @"D:\temp\saturnblabla\paket.lock"
 
 let printNuGet () =
     let nugetText = File.ReadAllText nugetPath
-    let nugetLock = JObject.Parse nugetText
-    let deps = nugetLock.["dependencies"] :?> JObject
-    let netcore3 = deps.[".NETCoreApp,Version=v3.0"] :?> JObject
-    netcore3.Properties()
-    |> Seq.map (fun p ->
-        let prop = p.Value :?> JObject
-        let v = prop.["resolved"].ToString()
+    let nugetLock = JsonNode.Parse nugetText
+    let deps = nugetLock.["dependencies"].AsObject()
+    let netcore3 = deps.[".NETCoreApp,Version=v3.0"].AsObject()
+    netcore3
+    |> Seq.map (fun kv ->
+        let prop = kv.Value.AsObject()
+        let v = prop.["resolved"].GetValue<string>()
         let v = if v.EndsWith (".0") then v.Substring(0,v.Length-2) else v
-        p.Name,v)
+        kv.Key,v)
     |> Seq.sortBy fst
     |> Seq.iter (fun (n,v) -> printfn "%s, %s" n v)
 

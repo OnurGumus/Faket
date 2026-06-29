@@ -1,7 +1,6 @@
 FSharp.Core
 FSharp.Compiler.Service
 Chessie
-Newtonsoft.Json
 Microsoft.NET.Test.Sdk
 NUnit
 NUnit3TestAdapter

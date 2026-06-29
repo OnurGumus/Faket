@@ -1,11 +1,10 @@
 ﻿/// Contains NuGet support.
 module Paket.NuGetV3
 
-open Newtonsoft.Json
+open System.Text.Json.Serialization
 open System.IO
 open System.Collections.Generic
 
-open Newtonsoft.Json.Serialization
 open Paket
 open System
 open System.IO
@@ -26,13 +25,13 @@ open Paket.PlatformMatching
 open FSharp.Polyfill
 
 type NugetV3SourceResourceJSON =
-    { [<JsonProperty("@type")>]
+    { [<JsonPropertyName("@type")>]
       Type : string
-      [<JsonProperty("@id")>]
+      [<JsonPropertyName("@id")>]
       ID : string }
 
 type NugetV3SourceRootJSON =
-    { [<JsonProperty("resources")>]
+    { [<JsonPropertyName("resources")>]
       Resources : NugetV3SourceResourceJSON [] }
 
 
@@ -78,7 +77,7 @@ let tryGetNuGetV3Resource (source : NuGetV3Source) (resourceType : NugetV3Resour
                     raise (Exception(sprintf "Could not load resources from '%s'" source.Url, e.SourceException))
                 | SuccessResponse x -> x
 
-            let json = JsonConvert.DeserializeObject<NugetV3SourceRootJSON>(rawData)
+            let json = Json.deserialize<NugetV3SourceRootJSON>(rawData)
             let resources =
                 json.Resources
                 |> Seq.distinctBy(fun x -> x.Type.ToLower())
@@ -168,7 +167,7 @@ type JSONVersionData =
 
 /// [omit]
 type JSONSearchResultVersion = {
-    [<JsonProperty("@id")>]
+    [<JsonPropertyName("@id")>]
     Id: string
     Version: string
 }
@@ -236,42 +235,42 @@ let getSearchAPI(auth,nugetUrl) =
 
 
 type NugetV3CatalogIndexItem =
-    {   [<JsonProperty("@id")>]
+    {   [<JsonPropertyName("@id")>]
         Id : string
-        [<JsonProperty("@type")>]
+        [<JsonPropertyName("@type")>]
         ItemType : string
-        [<JsonProperty("commitId")>]
+        [<JsonPropertyName("commitId")>]
         CommitId : string
-        [<JsonProperty("commitTimeStamp")>]
+        [<JsonPropertyName("commitTimeStamp")>]
         CommitTimeStamp : DateTimeOffset
-        [<JsonProperty("count")>]
+        [<JsonPropertyName("count")>]
         Count : int
     }
 
 /// large unused fields are commented-out
 type NugetV3CatalogPageItem =
-    {   //[<JsonProperty("@id")>]
+    {   //[<JsonPropertyName("@id")>]
         //Id : string
-        [<JsonProperty("@type")>]
+        [<JsonPropertyName("@type")>]
         ItemType : string
-        //[<JsonProperty("commitId")>]
+        //[<JsonPropertyName("commitId")>]
         //CommitId : string
-        [<JsonProperty("commitTimeStamp")>]
+        [<JsonPropertyName("commitTimeStamp")>]
         CommitTimeStamp : DateTimeOffset
-        [<JsonProperty("nuget:id")>]
+        [<JsonPropertyName("nuget:id")>]
         NuGetId : string
-        [<JsonProperty("nuget:version")>]
+        [<JsonPropertyName("nuget:version")>]
         NuGetVersion : string
     }
 
 type NugetV3CatalogPage =
-    {   [<JsonProperty("commitId")>]
+    {   [<JsonPropertyName("commitId")>]
         CommitId : string
-        [<JsonProperty("commitTimeStamp")>]
+        [<JsonPropertyName("commitTimeStamp")>]
         CommitTimeStamp : DateTimeOffset
-        [<JsonProperty("count")>]
+        [<JsonPropertyName("count")>]
         Count : int
-        [<JsonProperty("items")>]
+        [<JsonPropertyName("items")>]
         Items : NugetV3CatalogPageItem []
     }
 
@@ -302,7 +301,7 @@ let private getPageFileContent(pageFileName:String) =
             use compressed = new GZipStream(archive,CompressionMode.Decompress)
             use reader = new StreamReader(compressed,Encoding.UTF8)
             reader.ReadToEnd()
-            |> JsonConvert.DeserializeObject<NugetV3CatalogPage>
+            |> Json.deserialize<NugetV3CatalogPage>
             |> Some
         with
         | ex ->
@@ -350,8 +349,8 @@ let private getCatalogPage auth (item:NugetV3CatalogIndexItem)(basePath:String) 
             | UnknownError e -> failwithf "Catalog/3.0 Page N/A %A" e; ""
             | SuccessResponse s -> s
         let pageContents =
-            responseData |> JsonConvert.DeserializeObject<NugetV3CatalogPage>
-        setPageFileContent(pageFileName,pageContents |> JsonConvert.SerializeObject)
+            responseData |> Json.deserialize<NugetV3CatalogPage>
+        setPageFileContent(pageFileName,pageContents |> Json.serialize)
         pageContents;
 
 
@@ -495,14 +494,14 @@ let setCatalogCursor basePath catalog =
 
 /// [omit]
 let extractAutoCompleteVersions(response:string) =
-    JsonConvert.DeserializeObject<JSONVersionData>(response).Data
+    Json.deserialize<JSONVersionData>(response).Data
 
 /// [omit]
 let extractVersions(response:string) =
-    JsonConvert.DeserializeObject<JSONVersionData>(response).Versions
+    Json.deserialize<JSONVersionData>(response).Versions
 
 let extractSearchVersion(response:string) =
-    JsonConvert.DeserializeObject<JSONSearchData>(response)
+    Json.deserialize<JSONSearchData>(response)
 
 let internal findAutoCompleteVersionsForPackage(v3Url, auth, packageName:Domain.PackageName, includingPrereleases, maxResults) =
     async {
@@ -571,7 +570,7 @@ let FindVersionsForPackage(nugetURL, auth, package) =
 
 /// [omit]
 let extractPackages(response:string) =
-    JsonConvert.DeserializeObject<JSONVersionData>(response).Data
+    Json.deserialize<JSONVersionData>(response).Data
 
 let private getPackages(auth, nugetURL, packageNamePrefix, maxResults) = async {
     let! apiRes = getSearchAPI(auth,nugetURL) |> Async.AwaitTask
@@ -595,54 +594,54 @@ let FindPackages(auth, nugetURL, packageNamePrefix, maxResults) =
 
 
 type CatalogDependency =
-    { [<JsonProperty("id")>]
+    { [<JsonPropertyName("id")>]
       Id : string
-      [<JsonProperty("range")>]
+      [<JsonPropertyName("range")>]
       Range : string }
 type CatalogDependencyGroup =
-    { [<JsonProperty("targetFramework")>]
+    { [<JsonPropertyName("targetFramework")>]
       TargetFramework : string
-      [<JsonProperty("dependencies")>]
+      [<JsonPropertyName("dependencies")>]
       Dependencies : CatalogDependency [] }
 type Catalog =
-    { [<JsonProperty("licenseUrl")>]
+    { [<JsonPropertyName("licenseUrl")>]
       LicenseUrl : string
-      [<JsonProperty("listed")>]
+      [<JsonPropertyName("listed")>]
       Listed : System.Nullable<bool>
-      [<JsonProperty("version")>]
+      [<JsonPropertyName("version")>]
       Version : string
-      [<JsonProperty("dependencyGroups")>]
+      [<JsonPropertyName("dependencyGroups")>]
       DependencyGroups : CatalogDependencyGroup [] }
 
 
 type PackageIndexPackage =
-    { [<JsonProperty("@type")>]
+    { [<JsonPropertyName("@type")>]
       Type: string
-      [<JsonProperty("packageContent")>]
+      [<JsonPropertyName("packageContent")>]
       DownloadLink: string
-      [<JsonProperty("catalogEntry")>]
+      [<JsonPropertyName("catalogEntry")>]
       PackageDetails: Catalog }
 
 type PackageIndexPage =
-    { [<JsonProperty("@id")>]
+    { [<JsonPropertyName("@id")>]
       Id: string
-      [<JsonProperty("@type")>]
+      [<JsonPropertyName("@type")>]
       Type: string
-      [<JsonProperty("items")>]
+      [<JsonPropertyName("items")>]
       Packages: PackageIndexPackage []
-      [<JsonProperty("count")>]
+      [<JsonPropertyName("count")>]
       Count: int
-      [<JsonProperty("lower")>]
+      [<JsonPropertyName("lower")>]
       Lower: string
-      [<JsonProperty("upper")>]
+      [<JsonPropertyName("upper")>]
       Upper: string }
 
 type PackageIndex =
-    { [<JsonProperty("@id")>]
+    { [<JsonPropertyName("@id")>]
       Id: string
-      [<JsonProperty("items")>]
+      [<JsonPropertyName("items")>]
       Pages: PackageIndexPage []
-      [<JsonProperty("count")>]
+      [<JsonPropertyName("count")>]
       Count : int }
 
 let private getPackageIndexRaw (source : NuGetV3Source) (packageName:PackageName) =
@@ -656,7 +655,7 @@ let private getPackageIndexRaw (source : NuGetV3Source) (packageName:PackageName
             | NotFound -> None
             | UnknownError err ->
                 raise (System.Exception(sprintf "could not get registration data from %s" url, err.SourceException))
-            | SuccessResponse x -> Some (JsonConvert.DeserializeObject<PackageIndex>(x))
+            | SuccessResponse x -> Some (Json.deserialize<PackageIndex>(x))
     }
 
 let private getPackageIndexMemoized =
@@ -675,7 +674,7 @@ let private getPackageIndexPageRaw (source:NuGetV3Source) (url:string) =
             | UnknownError err ->
                 raise (System.Exception(sprintf "could not get registration data from %s" url, err.SourceException))
             | SuccessResponse x ->
-                let page = JsonConvert.DeserializeObject<PackageIndexPage>(x)
+                let page = Json.deserialize<PackageIndexPage>(x)
                 if isNull page.Packages || (page.Count > 0 && page.Packages.Length = 0) then
                     raise <| exn(sprintf "Failed to parse v3 'catalog:CatalogPage' on url '%s'%s" url (if verbose then sprintf ": \n%s" x else ""))
                 page

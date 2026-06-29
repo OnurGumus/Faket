@@ -3,7 +3,6 @@ source https://api.nuget.org/v3/index.json
 storage: none
 content: none
 
-nuget Newtonsoft.Json >= 10.0.3 redirects: force
 nuget Argu >= 5.1.0
 nuget FSharp.Core >= 6.0.3
 nuget Chessie >= 0.6

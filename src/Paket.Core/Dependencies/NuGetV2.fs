@@ -4,7 +4,6 @@ module Paket.NuGetV2
 open System
 open System.IO
 open System.Net
-open Newtonsoft.Json
 open System.IO.Compression
 open System.Xml
 open System.Text.RegularExpressions

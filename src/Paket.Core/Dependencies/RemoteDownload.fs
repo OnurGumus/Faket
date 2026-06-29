@@ -1,7 +1,7 @@
 ﻿module Paket.RemoteDownload
 
 open Paket
-open Newtonsoft.Json.Linq
+open System.Text.Json.Nodes
 open System
 open System.IO
 open Paket.Logging
@@ -32,8 +32,8 @@ let getSHA1OfBranch origin owner project (versionRestriction:VersionRestriction)
             let! document = lookupDocument(auth authKey,url)
             match document with
             | SuccessResponse document ->
-                let json = JObject.Parse(document)
-                return json.["sha"].ToString()
+                let json = JsonNode.Parse(document)
+                return json.["sha"].GetValue<string>()
             | NotFound ->
                 return raise (new Exception(sprintf "Could not find (404) hash for %s" url))
             | Unauthorized ->
@@ -46,9 +46,9 @@ let getSHA1OfBranch origin owner project (versionRestriction:VersionRestriction)
             let! document = lookupDocument(auth authKey,url)
             match document with
             | SuccessResponse document ->
-                let json = JObject.Parse(document)
-                let latest = json.["history"].First.["version"]
-                return latest.ToString()
+                let json = JsonNode.Parse(document)
+                let latest = json.["history"].[0].["version"]
+                return latest.GetValue<string>()
             | NotFound ->
                 return raise (new Exception(sprintf "Could not find hash for %s" url))
             | Unauthorized ->
@@ -242,8 +242,8 @@ let downloadRemoteFiles(remoteFile:ResolvedSourceFile,destination) = async {
         let url = sprintf "https://api.github.com/gists/%s/%s" remoteFile.Project remoteFile.Commit
         let authentication = auth remoteFile.AuthKey
         let! document = getFromUrl(authentication, url, null)
-        let json = JObject.Parse(document)
-        let files = json.["files"] |> Seq.map (fun i -> i.First.["filename"].ToString(), i.First.["raw_url"].ToString())
+        let json = JsonNode.Parse(document)
+        let files = json.["files"].AsObject() |> Seq.map (fun kv -> kv.Value.["filename"].GetValue<string>(), kv.Value.["raw_url"].GetValue<string>())
 
         let task =
             files |> Seq.map (fun (filename, url) ->

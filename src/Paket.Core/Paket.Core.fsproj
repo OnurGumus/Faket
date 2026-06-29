@@ -21,11 +21,11 @@
     </EmbeddedResource>
     <Compile Include="..\..\paket-files\fsprojects\FSharp.TypeProviders.SDK\src\AssemblyReader.fs">
       <Paket>True</Paket>
-      <Link>Common/AssemblyReader.fs</Link>
+      <Link>Common//AssemblyReader.fs</Link>
     </Compile>
     <Compile Include="..\..\paket-files\fsharp\FAKE\src\app\FakeLib\Globbing\Globbing.fs">
       <Paket>True</Paket>
-      <Link>Common/Globbing.fs</Link>
+      <Link>Common//Globbing.fs</Link>
     </Compile>
     <Compile Include="Common\Async.fs" />
     <Compile Include="Common\Logging.fsi" />
@@ -34,6 +34,7 @@
     <Compile Include="Common\Constants.fs" />
     <Compile Include="Common\Profile.fs" />
     <Compile Include="Common\Utils.fs" />
+    <Compile Include="Common\Json.fs" />
     <Compile Include="Common\Encryption.fs" />
     <Compile Include="Common\Xml.fs" />
     <Compile Include="Common\ProcessHelper.fs" />
@@ -106,7 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-    <_Parameter1>Paket.Tests</_Parameter1>
+      <_Parameter1>Paket.Tests</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

@@ -3,7 +3,6 @@ module Paket.NuGetCache
 
 open System
 open System.IO
-open Newtonsoft.Json
 open System.IO.Compression
 open Paket.Logging
 open System.Text
@@ -124,7 +123,7 @@ type NuGetPackageCache =
       Version: string
       CacheVersion: string }
 
-    static member CurrentCacheVersion = "8.1"
+    static member CurrentCacheVersion = "8.2"
 
     member this.WithDependencies (dependencies : (PackageName * VersionRequirement * FrameworkRestrictions) list) =
         { this with
@@ -148,6 +147,58 @@ type NuGetPackageCache =
                     FrameworkRestrictions.ExplicitRestriction restrictions
             n, v, restrictions)
         |> Set.ofList
+
+/// Flat, serializer-friendly representation of NuGetPackageCache. The F#-shaped
+/// SerializedDependencies (a list of tuples of domain types) is projected to plain
+/// strings so System.Text.Json can round-trip it without F#-specific converters.
+/// PackageName / VersionRequirement round-trip through their string forms, exactly as
+/// they do in paket.dependencies.
+type private CachedDependencyDto =
+    { Name : string
+      VersionRequirement : string
+      Restriction : string }
+
+type private NuGetPackageCacheDto =
+    { Dependencies : CachedDependencyDto []
+      PackageName : string
+      SourceUrl : string
+      Unlisted : bool
+      DownloadUrl : string
+      LicenseUrl : string
+      Version : string
+      CacheVersion : string }
+
+let private toDto (c:NuGetPackageCache) : NuGetPackageCacheDto =
+    { Dependencies =
+        c.SerializedDependencies
+        |> List.map (fun (name, versionRequirement, restriction) ->
+            { Name = name.ToString()
+              VersionRequirement = versionRequirement.ToString()
+              Restriction = restriction })
+        |> List.toArray
+      PackageName = c.PackageName
+      SourceUrl = c.SourceUrl
+      Unlisted = c.Unlisted
+      DownloadUrl = c.DownloadUrl
+      LicenseUrl = c.LicenseUrl
+      Version = c.Version
+      CacheVersion = c.CacheVersion }
+
+let private ofDto (d:NuGetPackageCacheDto) : NuGetPackageCache =
+    { SerializedDependencies =
+        match box d.Dependencies with
+        | null -> []
+        | _ ->
+            d.Dependencies
+            |> Array.toList
+            |> List.map (fun x -> PackageName x.Name, VersionRequirement.Parse x.VersionRequirement, x.Restriction)
+      PackageName = d.PackageName
+      SourceUrl = d.SourceUrl
+      Unlisted = d.Unlisted
+      DownloadUrl = d.DownloadUrl
+      LicenseUrl = d.LicenseUrl
+      Version = d.Version
+      CacheVersion = d.CacheVersion }
 
 let inline normalizeUrl(url:string) = url.Replace("https://","http://").Replace("www.","")
 
@@ -298,7 +349,7 @@ let tryGetDetailsFromCache force nugetURL (packageName:PackageName) (version:Sem
 
             try
                 let cacheResult =
-                    let cachedObject = JsonConvert.DeserializeObject<NuGetPackageCache> json
+                    let cachedObject = ofDto (Json.deserialize<NuGetPackageCacheDto> json)
                     if (PackageName cachedObject.PackageName <> packageName) ||
                         (cachedObject.Version <> version.Normalize())
                     then
@@ -417,7 +468,7 @@ let getCacheDataFromExtractedPackage (packageName:PackageName) (version:SemVerIn
 let getDetailsFromCacheOr force nugetURL (packageName:PackageName) (version:SemVerInfo) (getViaWebRequest : unit -> ODataSearchResult Async) : ODataSearchResult Async =
     let writeCacheFile(result:NuGetPackageCache) =
         let cacheFile = getCacheFiles force NuGetPackageCache.CurrentCacheVersion nugetURL packageName version
-        let serialized = JsonConvert.SerializeObject(result)
+        let serialized = Json.serialize(toDto result)
         let cachedData =
             try
                 if cacheFile.Exists then

@@ -676,9 +676,9 @@ type internal RestoreCache =
           ProjectsRestoredHash = Hash "" }
 
 let internal writeRestoreCache (file:string) { PackagesDownloadedHash = Hash packagesDownloadedHash; ProjectsRestoredHash = Hash projectsRestoredHash} =
-    let jobj = Newtonsoft.Json.Linq.JObject()
-    jobj.["packagesDownloadedHash"] <- Newtonsoft.Json.Linq.JToken.op_Implicit packagesDownloadedHash
-    jobj.["projectsRestoredHash"] <- Newtonsoft.Json.Linq.JToken.op_Implicit projectsRestoredHash
+    let jobj = System.Text.Json.Nodes.JsonObject()
+    jobj.["packagesDownloadedHash"] <- System.Text.Json.Nodes.JsonValue.Create(packagesDownloadedHash)
+    jobj.["projectsRestoredHash"] <- System.Text.Json.Nodes.JsonValue.Create(projectsRestoredHash)
     let s = jobj.ToString()
     saveToFile s (FileInfo file) |> ignore<_*_>
     //File.WriteAllText(file, s)
@@ -687,10 +687,11 @@ let private tryReadRestoreCache (file:string) =
     if File.Exists file then
         let f = File.ReadAllText(file)
         try
-            let jobj = Newtonsoft.Json.Linq.JObject.Parse(f)
-            { PackagesDownloadedHash = Hash (string jobj.["packagesDownloadedHash"]); ProjectsRestoredHash = Hash(string jobj.["projectsRestoredHash"]) }
+            let jobj = System.Text.Json.Nodes.JsonNode.Parse(f)
+            let str (node:System.Text.Json.Nodes.JsonNode) = if isNull (box node) then "" else node.GetValue<string>()
+            { PackagesDownloadedHash = Hash (str jobj.["packagesDownloadedHash"]); ProjectsRestoredHash = Hash (str jobj.["projectsRestoredHash"]) }
         with
-        | :? Newtonsoft.Json.JsonReaderException as e -> RestoreCache.Empty
+        | :? System.Text.Json.JsonException -> RestoreCache.Empty
     else RestoreCache.Empty
 
 let private readRestoreCache (lockFileName:FileInfo) =

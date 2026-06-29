@@ -34,12 +34,14 @@ type RuntimeGraph =
      Runtimes : Map<Rid, RuntimeDescription> }
    static member Empty = { Supports = Map.empty; Runtimes = Map.empty }
 
-open Newtonsoft.Json
-open Newtonsoft.Json.Linq
+open System.Text.Json
+open System.Text.Json.Nodes
 
 /// A module for parsing runtime.json files contained in various packages.
 module RuntimeGraphParser =
     open System.Collections.Generic
+
+    let private asString (n:JsonNode) = n.GetValue<string>()
 
     (*
 { "uwp.10.0.app": {
@@ -53,19 +55,19 @@ module RuntimeGraphParser =
       ]
   }
 }*)
-    let readCompatiblityProfilesJ (json:JObject) =
-      [ for t in json :> IEnumerable<KeyValuePair<string, JToken>> do
+    let readCompatiblityProfilesJ (json:JsonObject) =
+      [ for t in json do
           yield
             { Name = t.Key
               Supported =
-                [ for s in t.Value :?> JObject :> IEnumerable<KeyValuePair<string, JToken>> do
+                [ for s in (t.Value :?> JsonObject) do
                     match FrameworkDetection.internalExtract s.Key with
                     | Some (Unsupported _ ) -> ()
                     | Some fid ->
                         yield fid,
                             match s.Value with
-                            | :? JArray as j -> [ for rid in j -> { Rid = string rid } ]
-                            | t -> [ { Rid = string t } ]
+                            | :? JsonArray as j -> [ for rid in j -> { Rid = asString rid } ]
+                            | t -> [ { Rid = asString t } ]
                     | None -> failwithf "could not detect framework-identifier '%s'" s.Key ]
                 |> Map.ofSeq } ]
     (*{
@@ -74,26 +76,26 @@ module RuntimeGraphParser =
       "Microsoft.Win32.Primitives": {
         "runtime.win.Microsoft.Win32.Primitives": "4.3.0"
       },*)
-    let readRuntimeDescriptionJ (json:JObject) =
-      [ for t in json :> IEnumerable<KeyValuePair<string, JToken>> do
+    let readRuntimeDescriptionJ (json:JsonObject) =
+      [ for t in json do
           let rid = { Rid = t.Key }
           match t.Value with
-          | :? JObject as spec ->
+          | :? JsonObject as spec ->
               let imports =
                 match spec.["#import"] with
-                | :? JArray as j -> [ for t in j -> { Rid = string t } ]
+                | :? JsonArray as j -> [ for t in j -> { Rid = asString t } ]
                 | null -> []
                 | o -> failwithf "unknown stuff in '#import' value: %O" o
               let dependencies =
-                spec :> IEnumerable<KeyValuePair<string, JToken>>
+                spec
                 |> Seq.filter (fun kv -> kv.Key <> "#import")
                 |> Seq.map (fun kv ->
                     let packageName = PackageName kv.Key
                     let depsSpec =
                         match kv.Value with
-                        | :? JObject as deps ->
-                            deps :> IEnumerable<KeyValuePair<string, JToken>>
-                            |> Seq.map (fun kv -> PackageName kv.Key, VersionRequirement.Parse (string kv.Value))
+                        | :? JsonObject as deps ->
+                            deps
+                            |> Seq.map (fun kv -> PackageName kv.Key, VersionRequirement.Parse (asString kv.Value))
                             |> Seq.toList
                         | _ -> failwithf "unknown stuff in runtime-dependency: %O" kv.Value
                     packageName, depsSpec)
@@ -104,10 +106,10 @@ module RuntimeGraphParser =
                     RuntimeDependencies = dependencies }
           | _ -> failwithf "unknwn stuff in runtime-description: %O" t.Value ]
 
-    let readRuntimeGraphJ (json:JObject) =
+    let readRuntimeGraphJ (json:JsonObject) =
        { Supports =
             match json.["supports"] with
-            | :? JObject as supports ->
+            | :? JsonObject as supports ->
                 readCompatiblityProfilesJ supports
                 |> Seq.map (fun c -> c.Name, c)
                 |> Map.ofSeq
@@ -115,7 +117,7 @@ module RuntimeGraphParser =
             | _ -> failwith "invalid data in supports field."
          Runtimes =
             match json.["runtimes"] with
-            | :? JObject as runtimes ->
+            | :? JsonObject as runtimes ->
                 readRuntimeDescriptionJ runtimes
                 |> Seq.map (fun r -> r.Rid, r)
                 |> Map.ofSeq
@@ -123,7 +125,7 @@ module RuntimeGraphParser =
             | _ -> failwith "invalid data in runtimes" }
 
     let readRuntimeGraph (s:string) =
-        readRuntimeGraphJ (JObject.Parse(s))
+        readRuntimeGraphJ (JsonNode.Parse(s).AsObject())
 
 module Map =
     let merge (f:'b -> 'b -> 'b) (m1:Map<'a,'b>) (m2:Map<'a,'b>) =

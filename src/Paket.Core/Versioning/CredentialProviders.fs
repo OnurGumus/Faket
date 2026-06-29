@@ -2,16 +2,16 @@
 
 open System
 open System.IO
-open Newtonsoft.Json
+open System.Text.Json.Serialization
 
 type CredentialProviderResultMessage =
-    { [<JsonProperty("Username")>]
+    { [<JsonPropertyName("Username")>]
       Username : string;
-      [<JsonProperty("Password")>]
+      [<JsonPropertyName("Password")>]
       Password : string;
-      [<JsonProperty("Message")>]
+      [<JsonPropertyName("Message")>]
       Message  : string
-      [<JsonProperty("AuthTypes")>]
+      [<JsonPropertyName("AuthTypes")>]
       AuthTypes  : string [] }
     // From https://github.com/NuGet/NuGet.Client/blob/c17547b5c64ab8d498cc24340a09ae647456cf20/src/NuGet.Clients/NuGet.Credentials/PluginCredentialResponse.cs#L34
     member x.IsValid =
@@ -111,7 +111,7 @@ module CredentialProviders =
         let json = ProcessHelper.toLines procResult.Messages
         let credentialResponse =
             try
-                JsonConvert.DeserializeObject<CredentialProviderResultMessage>(json)
+                Json.deserialize<CredentialProviderResultMessage>(json)
             with e ->
                 raise <| exn(sprintf "Credential provider returned an invalid result: %s\nError: %s" json stdError, e)
         let parsableResult = not (isNull (box credentialResponse))
