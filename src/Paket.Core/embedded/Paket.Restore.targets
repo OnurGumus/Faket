@@ -51,14 +51,18 @@
 	<Target Name="SetPaketCommand" >
 		<!-- Test if paket is available in the standard locations. If so, that takes priority. Case 1/2 - non-windows specific -->
 		<PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
-			<!-- no windows, try native paket as default, root => tool -->
+			<!-- no windows, try native faket (then paket) as default, root => tool -->
+			<PaketExePath Condition=" '$(PaketExePath)' == '' AND Exists('$(PaketRootPath)faket') ">$(PaketRootPath)faket</PaketExePath>
+			<PaketExePath Condition=" '$(PaketExePath)' == '' AND Exists('$(PaketToolsPath)faket') ">$(PaketToolsPath)faket</PaketExePath>
 			<PaketExePath Condition=" '$(PaketExePath)' == '' AND Exists('$(PaketRootPath)paket') ">$(PaketRootPath)paket</PaketExePath>
 			<PaketExePath Condition=" '$(PaketExePath)' == '' AND Exists('$(PaketToolsPath)paket') ">$(PaketToolsPath)paket</PaketExePath>
 		</PropertyGroup>
 
-		<!-- Test if paket is available in the standard locations. If so, that takes priority. Case 2/2 - same across platforms -->
+		<!-- Test if faket/paket is available in the standard locations. If so, that takes priority. Case 2/2 - same across platforms -->
 		<PropertyGroup>
 			<!-- root => tool -->
+			<PaketExePath Condition=" '$(PaketExePath)' == '' AND Exists('$(PaketRootPath)faket.exe') ">$(PaketRootPath)faket.exe</PaketExePath>
+			<PaketExePath Condition=" '$(PaketExePath)' == '' AND Exists('$(PaketToolsPath)faket.exe') ">$(PaketToolsPath)faket.exe</PaketExePath>
 			<PaketExePath Condition=" '$(PaketExePath)' == '' AND Exists('$(PaketRootPath)paket.exe') ">$(PaketRootPath)paket.exe</PaketExePath>
 			<PaketExePath Condition=" '$(PaketExePath)' == '' AND Exists('$(PaketToolsPath)paket.exe') ">$(PaketToolsPath)paket.exe</PaketExePath>
 		</PropertyGroup>
@@ -67,18 +71,26 @@
 		<!-- First test: Is CLI configured to be used in "dotnet-tools.json"? - can result in a false negative; only a positive outcome is reliable. -->
 		<PropertyGroup Condition=" '$(PaketExePath)' == '' ">
 			<_DotnetToolsJson Condition="Exists('$(PaketRootPath)/.config/dotnet-tools.json')">$([System.IO.File]::ReadAllText("$(PaketRootPath)/.config/dotnet-tools.json"))</_DotnetToolsJson>
+			<_ConfigContainsFaket Condition=" '$(_DotnetToolsJson)' != ''">$(_DotnetToolsJson.Contains('"faket"'))</_ConfigContainsFaket>
+			<_ConfigContainsFaket Condition=" '$(_ConfigContainsFaket)' == ''">false</_ConfigContainsFaket>
 			<_ConfigContainsPaket Condition=" '$(_DotnetToolsJson)' != ''">$(_DotnetToolsJson.Contains('"paket"'))</_ConfigContainsPaket>
 			<_ConfigContainsPaket Condition=" '$(_ConfigContainsPaket)' == ''">false</_ConfigContainsPaket>
 		</PropertyGroup>
 
-		<!-- Second test: Call 'dotnet paket' and see if it returns without an error. Mute all the output. Only run if previous test failed and the test has not been disabled. -->
+		<!-- Second test: Call 'dotnet faket' (then 'dotnet paket') and see if it returns without an error. Mute all the output. Only run if previous test failed and the test has not been disabled. -->
 		<!-- WARNING: This method can lead to processes hanging forever, and should be used as little as possible. See https://github.com/fsprojects/Paket/issues/3705 for details. -->
-		<Exec Condition=" '$(PaketExePath)' == '' AND !$(PaketDisableCliTest) AND !$(_ConfigContainsPaket)" Command="dotnet paket --version" IgnoreExitCode="true" StandardOutputImportance="low" StandardErrorImportance="low" >
+		<Exec Condition=" '$(PaketExePath)' == '' AND !$(PaketDisableCliTest) AND !$(_ConfigContainsFaket) AND !$(_ConfigContainsPaket)" Command="dotnet faket --version" IgnoreExitCode="true" StandardOutputImportance="low" StandardErrorImportance="low" >
+			<Output TaskParameter="ExitCode" PropertyName="LocalFaketToolExitCode" />
+		</Exec>
+		<Exec Condition=" '$(PaketExePath)' == '' AND !$(PaketDisableCliTest) AND !$(_ConfigContainsFaket) AND !$(_ConfigContainsPaket) AND '$(LocalFaketToolExitCode)' != '0'" Command="dotnet paket --version" IgnoreExitCode="true" StandardOutputImportance="low" StandardErrorImportance="low" >
 			<Output TaskParameter="ExitCode" PropertyName="LocalPaketToolExitCode" />
 		</Exec>
 
-		<!-- If paket is installed as CLI use that. Again, only if paket haven't already been found in standard locations. -->
-		<PropertyGroup Condition=" '$(PaketExePath)' == '' AND ($(_ConfigContainsPaket) OR '$(LocalPaketToolExitCode)' == '0') ">
+		<!-- If faket/paket is installed as CLI use that. Again, only if it hasn't already been found in standard locations. faket takes priority. -->
+		<PropertyGroup Condition=" '$(PaketExePath)' == '' AND ($(_ConfigContainsFaket) OR '$(LocalFaketToolExitCode)' == '0') ">
+			<_PaketCommand>dotnet faket</_PaketCommand>
+		</PropertyGroup>
+		<PropertyGroup Condition=" '$(PaketExePath)' == '' AND '$(_PaketCommand)' == '' AND ($(_ConfigContainsPaket) OR '$(LocalPaketToolExitCode)' == '0') ">
 			<_PaketCommand>dotnet paket</_PaketCommand>
 		</PropertyGroup>
 
@@ -88,8 +100,8 @@
 			<PaketExePath Condition=" '$(PaketExePath)' == '' AND '$(PaketBootstrapperStyle)' == 'proj' ">$(PaketToolsPath)paket</PaketExePath>
 			<PaketExePath Condition=" '$(PaketExePath)' == '' AND Exists('$(PaketBootStrapperExeDir)') ">$(PaketBootStrapperExeDir)paket</PaketExePath>
 
-			<!-- If all else fails, use global path approach. -->
-			<PaketExePath Condition=" '$(PaketExePath)' == ''">paket</PaketExePath>
+			<!-- If all else fails, use global path approach (prefer faket, then paket). -->
+			<PaketExePath Condition=" '$(PaketExePath)' == ''">faket</PaketExePath>
 		</PropertyGroup>
 
 		<!-- If not using CLI, setup correct execution command. -->

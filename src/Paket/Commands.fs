@@ -459,6 +459,14 @@ with
     interface IArgParserTemplate with
         member __.Usage = ""
 
+type MigrateArgs =
+    | [<CustomCommandLine("--apply")>] Apply
+with
+    interface IArgParserTemplate with
+        member this.Usage =
+            match this with
+            | Apply -> "perform the migration (omit for a dry run that only reports what would change)"
+
 type ShowConditionsArgs =
     | [<Hidden;NoCommandLine>] NoArgs
 with
@@ -702,6 +710,7 @@ type Command =
     | [<CustomCommandLine("remove")>]                   Remove of ParseResults<RemoveArgs>
     | [<CustomCommandLine("restore")>]                  Restore of ParseResults<RestoreArgs>
     | [<CustomCommandLine("hash")>]                     Hash of ParseResults<HashArgs>
+    | [<CustomCommandLine("migrate")>]                  Migrate of ParseResults<MigrateArgs>
     | [<CustomCommandLine("simplify")>]                 Simplify of ParseResults<SimplifyArgs>
     | [<CustomCommandLine("update")>]                   Update of ParseResults<UpdateArgs>
     | [<CustomCommandLine("find-packages")>]            FindPackages of ParseResults<FindPackagesArgs>
@@ -737,6 +746,7 @@ with
             | Remove _ -> "remove a dependency"
             | Restore _ -> "download the computed dependency graph"
             | Hash _ -> "write per-package content hashes (sha512) into paket.lock for reproducible (e.g. Nix) pinning"
+            | Migrate _ -> "migrate an existing Paket setup to Faket (dry run unless --apply)"
             | Simplify _ -> "simplify declared dependencies by removing transitive dependencies"
             | Update _ -> "update dependencies to their latest version"
             | FindPackages _ -> "search for NuGet packages"

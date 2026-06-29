@@ -745,6 +745,14 @@ let hash (results : ParseResults<HashArgs>) =
     let dependenciesFile = Dependencies.Locate()
     Paket.HashProcess.Run(dependenciesFile.DependenciesFile) |> ignore
 
+let migrate (results : ParseResults<MigrateArgs>) =
+    let apply = results.Contains MigrateArgs.Apply
+    let root =
+        match Dependencies.TryLocate() with
+        | Some d -> d.RootPath
+        | None -> Directory.GetCurrentDirectory()
+    Paket.MigrateProcess.run root apply |> ignore
+
 let showConditions (results : ParseResults<ShowConditionsArgs>) =
     let dependenciesFile = Dependencies.Locate()
     for condition in dependenciesFile.GetConditions() do
@@ -899,6 +907,7 @@ let handleCommand silent command =
     | Remove r -> processCommand silent remove r
     | Restore r -> processCommand silent restore r
     | Hash r -> processCommand silent hash r
+    | Migrate r -> processCommand silent migrate r
     | Simplify r -> processCommand silent simplify r
     | Update r -> processCommand silent update r
     | FindPackages r -> processCommand silent (findPackages silent) r
